@@ -11,4 +11,12 @@
   Pauli {
     AllExtensions.m
   }
+  Rowley {
+    pAdicExtensions {
+      +spec
+    }
+    pAdicGaloisGroup {
+      +spec
+    }
+  }
 }
