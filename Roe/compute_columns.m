@@ -16,17 +16,13 @@ while true do
     S := PolynomialRing(R);
     pol := S!coeffs;
 
-    if f eq 1 then
-        eispol := pol;
-    else
-        try
-            fac, prec_loss, t := Factorization(pol : Extensions:=true);
-            eispol := DefiningPolynomial(t[1]`Extension);
-        catch err
-            prec := 2*prec;
-            continue;
-        end try;
-    end if;
+    try
+        fac, prec_loss, t := Factorization(pol : Extensions:=true);
+        eispol := DefiningPolynomial(t[1]`Extension);
+    catch err
+        prec := 2*prec;
+        continue;
+    end try;
     break;
 end while;
 AssignNames(~S, ["x"]);
