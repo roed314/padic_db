@@ -3,22 +3,32 @@
 // Usage: ls lf.todo | parallel -j128 "magma -b label:={1} compute_columns.m > lf.errors/{1}"
 // Output: Writes to lf.out/<label>, with a | separated line of computed columns
 
+SetColumns(0);
 AttachSpec("../spec");
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
 f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
-// Taken from Suggested precision
-prec := Maximum([4, 4*c]);
-R := pAdicRing(p, prec);
-S := PolynomialRing(R);
-AssignNames(~S, ["x"]);
-f := S!coeffs;
+// Taken from SuggestedPrecision
+prec := Maximum([2, 2*c]);
 
-if f eq 1 then
-    eispol := f;
-else
-    fac, prec_loss, t := Factorization(f : Extensions:=true);
-    eispol := DefiningPolynomial(t[1]`Extension);
-end if;
+while true do
+    R := pAdicRing(p, prec);
+    S := PolynomialRing(R);
+    pol := S!coeffs;
+
+    if f eq 1 then
+        eispol := pol;
+    else
+        try
+            fac, prec_loss, t := Factorization(pol : Extensions:=true);
+            eispol := DefiningPolynomial(t[1]`Extension);
+        catch err
+            prec := 2*prec;
+            continue;
+        end try;
+    end if;
+    break;
+end while;
+AssignNames(~S, ["x"]);
 
 polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
