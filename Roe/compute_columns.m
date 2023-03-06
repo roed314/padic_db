@@ -10,7 +10,7 @@ f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
 prec := Maximum([2, 2*c]);
 R := pAdicRing(p, prec);
 S := PolynomialRing(R);
-AssignNames(~S, "x");
+AssignNames(~S, ["x"]);
 f := S!coeffs;
 
 if f eq 1 then
