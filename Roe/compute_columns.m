@@ -7,7 +7,7 @@ AttachSpec("../spec");
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
 f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
 // Taken from Suggested precision
-prec := Maximum([2, 2*c]);
+prec := Maximum([4, 4*c]);
 R := pAdicRing(p, prec);
 S := PolynomialRing(R);
 AssignNames(~S, ["x"]);
