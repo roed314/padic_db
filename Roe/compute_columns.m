@@ -5,6 +5,7 @@
 
 SetColumns(0);
 AttachSpec("../spec");
+print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
 f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
 // Taken from SuggestedPrecision
