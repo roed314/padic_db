@@ -8,6 +8,11 @@ AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
 f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+if n eq f then
+    // Unramified, where the code below doesn't work
+    PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
+    exit;
+end if;
 // Taken from SuggestedPrecision
 prec := Maximum([2, 2*c]);
 
