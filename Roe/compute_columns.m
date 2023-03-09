@@ -17,7 +17,8 @@ end if;
 // Taken from SuggestedPrecision; this is probably way too high now that we're no longer factoring
 prec := Maximum([2, 2*c]);
 F<t> := UnramifiedExtension(pAdicRing(p, prec), f);
-S<y> := PolynomialRing(F);
+S<x> := PolynomialRing(F);
+y := x;
 eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
