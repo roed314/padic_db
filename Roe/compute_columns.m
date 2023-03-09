@@ -36,8 +36,22 @@ polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
 polygon := polygon[2..#polygon];
 respols := ResidualPolynomials(eispol);
-k := CoefficientRing(respols[1]);
-AssignNames(~k, ["a"]);
+k0X := Parent(respols[1]);
+k0 := CoefficientRing(respols[1]);
+for j in [2..#respols] do
+    assert k0 eq CoefficientRing(respols[j]);
+end for;
+// Need to change the coefficient ring to one defined by a Conway polynomial
+k<a> := GF(#k0);
+SetPowerPrinting(k, false);
+rts := [pair[1] : pair in Roots(DefiningPolynomial(k0), k)];
+for rt in rts do
+    tok := hom<k0 -> k | rt>;
+    kX<x>, tokX := ChangeRing(k0X, k, tok);
+    PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", tokX(respol)) : respol in respols], ",") * "}");
+end for;
+exit;
+
 associated_inertia := [LCM([Degree(he[1]) : he in Factorization(respol)]) : respol in respols];
 
 // Now prepare for printing to file
