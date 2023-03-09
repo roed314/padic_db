@@ -7,55 +7,25 @@ SetColumns(0);
 AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
-f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
+f := StringToInteger(f);
 if n eq f then
-    // Unramified, where the code below doesn't work
+    // Unramified, so we already know the output
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
     exit;
 end if;
-// Taken from SuggestedPrecision
+// Taken from SuggestedPrecision; this is probably way too high now that we're no longer factoring
 prec := Maximum([2, 2*c]);
-
-while true do
-    R := pAdicRing(p, prec);
-    S := PolynomialRing(R);
-    pol := S!coeffs;
-
-    try
-        fac, prec_loss, t := Factorization(pol : Extensions:=true);
-        eispol := DefiningPolynomial(t[1]`Extension);
-    catch err
-        prec := 2*prec;
-        continue;
-    end try;
-    break;
-end while;
-AssignNames(~S, ["x"]);
+F<t> := UnramifiedExtension(pAdicRing(p, prec), f);
+S<y> := PolynomialRing(F);
+eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
 polygon := polygon[2..#polygon];
 respols := ResidualPolynomials(eispol);
-k0X := Parent(respols[1]);
-k0 := CoefficientRing(respols[1]);
-for j in [2..#respols] do
-    assert k0 eq CoefficientRing(respols[j]);
-end for;
-if IsPrimeField(k0) then
-    PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", respol) : respol in respols], ",") * "}");
-else
-    // Need to change the coefficient ring to one defined by a Conway polynomial
-    k<a> := GF(#k0);
-    SetPowerPrinting(k, false);
-    rts := [pair[1] : pair in Roots(DefiningPolynomial(k0), k)];
-    for rt in rts do
-        tok := hom<k0 -> k | rt>;
-        kX<x>, tokX := ChangeRing(k0X, k, tok);
-        PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", tokX(respol)) : respol in respols], ",") * "}");
-    end for;
-end if;
-exit;
-
+k := CoefficientRing(respols[1]);
+AssignNames(~k, ["t"]);
 associated_inertia := [LCM([Degree(he[1]) : he in Factorization(respol)]) : respol in respols];
 
 // Now prepare for printing to file
