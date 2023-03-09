@@ -41,15 +41,19 @@ k0 := CoefficientRing(respols[1]);
 for j in [2..#respols] do
     assert k0 eq CoefficientRing(respols[j]);
 end for;
-// Need to change the coefficient ring to one defined by a Conway polynomial
-k<a> := ext<GF(p)|ConwayPolynomial(p, Degree(k0))>;
-SetPowerPrinting(k, false);
-rts := [pair[1] : pair in Roots(DefiningPolynomial(k0), k)];
-for rt in rts do
-    tok := hom<k0 -> k | rt>;
-    kX<x>, tokX := ChangeRing(k0X, k, tok);
-    PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", tokX(respol)) : respol in respols], ",") * "}");
-end for;
+if IsPrimeField(k) then
+    PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", respol) : respol in respols], ",") * "}");
+else
+    // Need to change the coefficient ring to one defined by a Conway polynomial
+    k<a> := ext<GF(p)|ConwayPolynomial(p, Degree(k0))>;
+    SetPowerPrinting(k, false);
+    rts := [pair[1] : pair in Roots(DefiningPolynomial(k0), k)];
+    for rt in rts do
+        tok := hom<k0 -> k | rt>;
+        kX<x>, tokX := ChangeRing(k0X, k, tok);
+        PrintFile("lf.check/" * label, "{" * Join([Sprintf("\"%o\"", tokX(respol)) : respol in respols], ",") * "}");
+    end for;
+end if;
 exit;
 
 associated_inertia := [LCM([Degree(he[1]) : he in Factorization(respol)]) : respol in respols];
