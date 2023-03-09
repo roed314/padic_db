@@ -42,7 +42,7 @@ for j in [2..#respols] do
     assert k0 eq CoefficientRing(respols[j]);
 end for;
 // Need to change the coefficient ring to one defined by a Conway polynomial
-k<a> := GF(#k0);
+k<a> := ext<GF(p)|ConwayPolynomial(p, Degree(k0))>;
 SetPowerPrinting(k, false);
 rts := [pair[1] : pair in Roots(DefiningPolynomial(k0), k)];
 for rt in rts do
