@@ -14,12 +14,27 @@ if n eq f then
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
     exit;
 end if;
-// Taken from SuggestedPrecision; this is probably way too high now that we're no longer factoring
+// Taken from SuggestedPrecision
 prec := Maximum([2, 2*c]);
-F<t> := UnramifiedExtension(pAdicRing(p, prec), f);
-S<x> := PolynomialRing(F);
-y := x;
-eispol := eval eispol;
+
+while true do
+    R := pAdicRing(p, prec);
+    if f gt 1 then
+        R<t> := UnramifiedExtension(R, f);
+    end if;
+    S<x> := PolynomialRing(R);
+    pol := S!coeffs;
+    try
+        fac, prec_loss, ext_info := Factorization(pol : Extensions:=true);
+        eispol := DefiningPolynomial(ext_info[1]`Extension);
+    catch err
+        prec := 2 * prec;
+        continue;
+    end try;
+    break;
+end while;
+//y := x;
+//eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
