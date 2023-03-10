@@ -7,8 +7,9 @@ SetColumns(0);
 AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
-f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
-f := StringToInteger(f);
+f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+//f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
+//f := StringToInteger(f);
 if n eq f then
     // Unramified, so we already know the output
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
