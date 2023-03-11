@@ -42,7 +42,10 @@ polygon := Vertices(RamificationPolygon(eispol));
 polygon := polygon[2..#polygon];
 respols := ResidualPolynomials(eispol);
 k := CoefficientRing(respols[1]);
-AssignNames(~k, ["t"]);
+if Degree(k) gt 1 then
+    AssignNames(~k, ["t"]);
+    SetPowerPrinting(k, false);
+end if;
 associated_inertia := [LCM([Degree(he[1]) : he in Factorization(respol)]) : respol in respols];
 
 // Now prepare for printing to file
