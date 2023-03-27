@@ -92,7 +92,7 @@ function RamificationPolygon_sub(phi);
 end function;
 
 
-intrinsic RamificationPolygon(f::RngUPolElt[RngPad]) -> .
+intrinsic RamificationPolygonA(f::RngUPolElt[RngPad]) -> .
 {
 Returns the ramification polygon of f.
 
@@ -111,6 +111,11 @@ The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root
             Slopes(rp);
             // [-27/2, -5/2, -1/2]
 
+            R := pAdicRing(2, 20);
+            S<x> := PolynomialRing(R);
+            eispol := x^4 + 2*x + 2;
+            polygon := Vertices(RamificationPolygon(eispol));
+        
         A ramification polygon with a horizontal segment:
 
             R := pAdicRing(3,20); 
@@ -122,6 +127,8 @@ The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root
             Slopes(rp);
             // [-54, -5/2, -1/2, 0]
 
+
+
         AUTHORS:
 
 }
@@ -131,7 +138,7 @@ The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root
         end if;
 
 
-        return LowerVertices(RamificationPolygon_sub(f));
+        return RamificationPolygon_sub(f);
 
 end intrinsic;
 
@@ -151,6 +158,8 @@ function vertices_slopes(ramification_polygon)
 end function;
 
 /*
+
+Attach("AllExtensions.m");
 
 for k in [10..3000] do
 "k =",k;
@@ -658,11 +667,50 @@ end function;
 //   output (optional): "newton" a NewtonPolyon object (default)
 //                      "list" a list of points on the Newton polygon
 // Output: 
-//   The Newton polygon of the ramificaiton polygon of f (as NewtonPolygon or List)
+//   The Newton polygon of the ramification polygon of f (as NewtonPolygon or List)
+
 intrinsic RamificationPolygon(f:method:="min",output:="newton") -> .
 {Input: f - an Eisenstein polynomial (correctness of input is not checked) method (optional): "min" the minimum-based definition (default) "def" the formal definition output (optional): "newton" a NewtonPolyon object (default) "list" a list of points on the Newton polygon. Output: The Newton polygon of the ramificaiton polygon of f (as NewtonPolygon or List)
+
+Returns the ramification polygon of f.
+
+The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root of f and n is the degree of f.
+
+        EXAMPLES:
+
+        The vertices of a ramification polygon and the slopes of its segments:
+
+            R := pAdicRing(3,20); 
+            Rx<x> := PolynomialRing(R);
+            f := x^27+3*x^24+3*x^18+3*x^9+9*x^3+9*x^3+6;
+            rp := RamificationPolygon(f);
+            Vertices(rp);
+            // [(1, 51), (3, 24), (9, 9), (27, 0)]
+            Slopes(rp);
+            // [-27/2, -5/2, -1/2]
+
+        Polynomial over a field:
+
+            R := pAdicField(2, 20);
+            S<x> := PolynomialRing(R);
+            eispol := x^4 + 2*x + 2;
+            Vertices(RamificationPolygon(eispol));
+        
+        A ramification polygon with a horizontal segment:
+
+            R := pAdicRing(3,20); 
+            Rx<x> := PolynomialRing(R);
+            f := x^108+3*x^24+3*x^18+3*x^9+9*x^3+9*x^3+6;
+            rp := RamificationPolygon(f);
+            Vertices(rp);
+            // [(1, 132), (3, 24), (9, 9), (27, 0), (108, 0)]
+            Slopes(rp);
+            // [-54, -5/2, -1/2, 0]
 }    
-    
+    k := RingOfIntegers(CoefficientRing(f));
+    f := Polynomial(k,f);
+
+
     if method eq "def" then
       n := Degree(f);
       k := CoefficientRing(f);
