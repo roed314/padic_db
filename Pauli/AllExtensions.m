@@ -69,6 +69,29 @@ end intrinsic;
 ///
 
 
+
+///////////////////////////////////////////////////////////////
+
+
+function RamificationPolygon_sub(phi);
+
+        K:=CoefficientRing(phi);
+
+        n:=Degree(phi);
+        L:=ext<K|phi>;
+        alpha:=L.1;
+
+        Lx<x>:=PolynomialRing(L);
+        rho:=Evaluate(phi,alpha*x + alpha) div (alpha^n); //Ramification Polynomial
+        rho:=Lx!rho;
+        ChangePrecision(~rho,Precision(L));
+
+        ramification_polygon := NewtonPolygon(rho);
+
+        return ramification_polygon,rho;
+end function;
+
+
 intrinsic RamificationPolygon(f::RngUPolElt[RngPad]) -> .
 {
 Returns the ramification polygon of f.
@@ -101,41 +124,61 @@ The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root
 
         AUTHORS:
 
-        - Brian Sinclair and Sebastian Pauli (2017-07-19): initial version
 }
+
         if not IsEisenstein(f) then
             Error("Ramification polynomials are only defined for Eisenstein polynomials");
         end if;
 
-        r := RamificationPolynomial(f); 
-        return NewtonPolygon(r);
 
-        // needs fixing:
+        return LowerVertices(RamificationPolygon_sub(f));
 
-        // First we find the ordinates of points above p^k
-        verts := [];
-        vv := [Valuation(cc):cc in Coefficients(f)];
-        k := CoefficientRing(f);
-        p := Prime(k);
-        n := Degree(f);
-        su := Valuation(n,p);
-        for i in [0..su-1] do
-            abscissa := p^i;
-            ordinate := Minimum([n * (Valuation(k!(Binomial(kk,abscissa))) + vv[kk+1] - 1) + kk :  kk in [abscissa..n]]);
-            Append(~verts,<abscissa,ordinate>);
-        end for;
-
-        //  Now we add the tame segment
-        for i in [p^su..n-1] do
-            if Valuation(Binomial(n,i),p) eq  0 then
-                Append(~verts,<i,0>);
-            end if;
-        end for;
-
-        //  Finally the point for the monic leading term
-        Append(~verts,<n,0>);
-        return NewtonPolygon(verts);
 end intrinsic;
+
+
+function vertices_slopes(ramification_polygon)
+
+        vertices := LowerVertices(ramification_polygon);
+        slopes := Slopes(ramification_polygon)[1..#vertices-1];
+
+        if vertices[1][1] eq 0 then
+                vertices:=vertices[2..#vertices];               //get rid of point with x-coordinate=0
+                slopes:=slopes[2..#slopes];                     //get rid of segment with infinite slope
+        end if;
+
+        return vertices, slopes;
+
+end function;
+
+/*
+
+for k in [10..3000] do
+"k =",k;
+  p := Random([2,3,5,7,11,13,17]);
+"p =",p;
+  n := Random([a : a in [p^2,2*p^2,6*p^2,3*p^2,p^4,p^3,p^4,p^5] | a le k] cat [12*p]);
+"n =",n;
+  zp := pAdicRing(p,30);
+  J := (PossibleDiscriminants(zp,n));
+  j := Random(J[1..Minimum(#J,20)]);
+"j =",j;
+  R := Random(AllRamificationPolygons(zp,n,j));
+"R =",R;
+  A := Random(AllResidualPolynomials(zp,R,p));
+"A =",A;
+  Ls := (AllTotallyRamifiedExtensions(zp,R,A,1:want_filter:=false));
+  for kk in [1..Minimum(#Ls div 2,30)] do
+    L := Random(Ls);
+"R_L",RamificationPolygonWithColinearPoints(L);
+"A_L",ResidualPolynomials(L);
+    if R ne RamificationPolygonWithColinearPoints(L) then
+       error p,R,L;
+    elif A ne ResidualPolynomials(L) then
+       error p,A,L;
+    end if;
+  end for;
+end for;
+*/
 
 
 intrinsic RamificationPolygonWithColinearPoints(f::RngUPolElt[RngPad]) -> .
@@ -201,12 +244,14 @@ intrinsic RamificationPolygonWithColinearPoints(f::RngUPolElt[RngPad]) -> .
             //  2D cross product of the vectors oa and ob.
             return (a[1] - o[1]) * (b[2] - o[2]) - (a[2] - o[2]) * (b[1] - o[1]);
         end function;
-
+//"verts",verts;
         lower := [verts[1]];
         segments := [];
         for i in [2..#verts] do
+//"i",i,#lower;
             //  We check cross < 0 since we want to retain points on the boundary.
-            while #(lower) gt 2 and cross(lower[#lower-1], lower[#lower], verts[i]) lt 0 do
+//if #lower ge 2 then cross(lower[#lower-1], lower[#lower], verts[i]); end if;
+            while #(lower) ge 2 and cross(lower[#lower-1], lower[#lower], verts[i]) lt 0 do
                 lower := lower[1..#lower-1];
             end while;
             Append(~lower,verts[i]);
@@ -216,8 +261,6 @@ intrinsic RamificationPolygonWithColinearPoints(f::RngUPolElt[RngPad]) -> .
         end if;
         return lower;
 end intrinsic;
-
-
 
 intrinsic HasseHerbrand(f::RngUPolElt[RngPad],m) -> .
     {
@@ -254,6 +297,60 @@ intrinsic HasseHerbrand(f::RngUPolElt[RngPad],m) -> .
 end intrinsic;
 
 
+
+
+
+function ResidualPolynomials_sub(R,rho)
+
+
+        //rho is ramification polynomial.
+
+        L:= CoefficientRing(rho);
+
+        vertices, slopes:=vertices_slopes(R);
+//"slopes",slopes;
+        if vertices[1][1] eq 0 then
+                vertices:=vertices[2..#vertices];               //get rid of point with x-coordinate=0
+                slopes:=slopes[2..#slopes];                     //get rid of segment with infinite slope
+        end if;
+
+        a:=[Integers()!vertices[i][1]: i in [1..#vertices]];    //list of x-coordinates of vertices
+        b:=[Integers()!vertices[i][2]: i in [1..#vertices]];    //list of y-coordinates of vertices
+
+        l:=#slopes;
+
+        pi_L:=UniformizingElement(L);
+
+        e:=[];
+        h:=[];
+
+        for i in [1..l] do
+                e[i]:=Denominator(-slopes[i]);          //list of (negative) slope denominators
+                h[i]:=Numerator(-slopes[i]);                    //list of (negative) slope numerators
+        end for;
+
+        A:=[];
+
+        RL,omega:=ResidueClassField(L);
+        Ry<y>:=PolynomialRing(RL);
+
+        for i in [1..l] do
+                di:=a[i+1]-a[i];
+                fin:=Integers()!(di/e[i]);
+                Ai:=Polynomial(Ry,[&+[omega(Coefficient(rho,j*e[i]+a[i]) div pi_L^(-j*h[i]+b[i]))*y^j: j in [0..fin]]]);
+                Ai:=Ry!Ai;
+                A[i]:=Ai;
+        end for;
+
+
+        return A;
+
+end function;
+
+
+
+
+
 intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
         {
         Returns a list of the residual polynomials of the ramification polynomial of an Eisenstein polynomial self.
@@ -266,10 +363,15 @@ intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
              Rx<x> := PolynomialRing(R);
              f := x^9+6*x^3+3;
              IsEisenstein(f);
-             RamificationPolygon(f);
+             Slopes(RamificationPolygon(f));
              //Finite Newton polygon with 3 vertices: (1, 12), (3, 3), (9, 0)
              ResidualPolynomials(f);
              // [z + 2, z^3 + 1]
+             g := x^9 + 6*x^5 + 3; 
+             Slopes(RamificationPolygon(g));
+             ResidualPolynomials(g);
+
+
 
         //A ramfication polygon with a horizontal segment::
 
@@ -292,6 +394,9 @@ intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
              ResidualPolynomials(f);
              // [z + 1, z^2 + 1, z^4 + 1, z^8 + 1]
 
+
+
+
         AUTHORS:
 
         - Sebastian Pauli and Brian Sinclair (2017-07-20): initial version
@@ -301,49 +406,13 @@ intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
             Error("the polynomial self must be Eisenstein");
         end if;
 
-        Rx := Parent(f);
-        R := BaseRing(Rx);
-        pi := UniformizingElement(R);
-        p := Prime(R);
-        F, Fm := ResidueClassField(R);
-        Fz<z> := PolynomialRing(F);
+        
+        R,rho:=RamificationPolygon_sub(f);
+        A:=ResidualPolynomials_sub(R,rho);
 
-        n := Degree(f);
-        phi0 := ConstantCoefficient(f);
-        phi01 := phi0 div pi; 
+        return <a:a in A>;
 
-        rp := RamificationPolygonWithColinearPoints(f);
-        respols := [];
-        j := 1;
-        while j lt #(rp) do
-            k := j;
-            p_s_k := rp[k][1];
-            slope := (rp[j+1][2]-rp[j][2])/(rp[j+1][1]-rp[j][1]);
-            e := Denominator(slope);
-            thispol := Fz!(0);
-            while true do
-//rp;
-                p_s_i := rp[j][1];
-                a_i, b_i := Quotrem(rp[j][2],n);
-                if b_i  eq  0 then
-                    a_i -:= 1;
-                    b_i  := n;
-                end if;
-//"p_s_i",p_s_i;
-//"p_s_k",p_s_k;
-//"a_i",a_i;
-                thispol +:= Fm((Coefficient(f,b_i)*Binomial(b_i,p_s_i)*(-phi01)^(-a_i-1)) div (pi^(a_i+1)))*z^((p_s_i-p_s_k) div e);
-                if j ge #(rp) or (rp[j+1][2]-rp[j][2])/(rp[j+1][1]-rp[j][1])  ne  slope then
-                    break;
-                end if;
-                j+:=1;
-//"j",j;
-            end while;
-       
-            Append(~respols,thispol);
-        end while;
 
-        return respols;
 end intrinsic;
 
 
@@ -430,7 +499,7 @@ intrinsic ResidualPolynomialOfComponent(f::RngUPolElt[RngPad],m::RngIntElt) -> .
         if -m in Slopes(rp) then
             i := Position(Slopes(rp),-m);
             respol := ResidualPolynomials(f);
-"verti1",Vertices(rp)[i][1];            
+//"verti1",Vertices(rp)[i][1];            
             return (respol[i])*z^Integers()!(Vertices(rp)[i][1]);
         else
             L := [v[2]+v[1]*m : v in Vertices(rp)];
@@ -774,6 +843,8 @@ AllRamificationPolygonsSub := function(crp,s)
     lastvert := crp`rpolyg[#crp`rpolyg];
     
     // Lower bound based on current minimum valutions
+//"crp",#crp`lowerv,Parent(#crp`lowerv),crp`p,Parent(crp`p);
+//[crp`p^s..#crp`lowerv];
     minbound := Min([n*(Valuation(crp`K!Binomial(k,crp`p^s))+crp`lowerv[k]-1)+k : k in [crp`p^s..#crp`lowerv]] cat [n*(Valuation(crp`K!Binomial(n,crp`p^s)))]);
 
     // Lower bound based on last added segment
