@@ -46,8 +46,6 @@ y := x;
 eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
-// Remove the first vertex, since it has y-coordinate infinity
-polygon := polygon[2..#polygon];
 respols := ResidualPolynomials(eispol);
 k := CoefficientRing(respols[1]);
 if Degree(k) gt 1 then
