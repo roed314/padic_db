@@ -7,9 +7,9 @@ SetColumns(0);
 AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
-f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
-//f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
-//f := StringToInteger(f);
+//f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
+f := StringToInteger(f);
 if n eq f then
     // Unramified, so we already know the output
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
@@ -18,6 +18,7 @@ end if;
 // Taken from SuggestedPrecision
 prec := Maximum([2, 2*c]);
 
+/*
 while true do
     R := pAdicRing(p, prec);
     if f gt 1 then
@@ -34,8 +35,15 @@ while true do
     end try;
     break;
 end while;
-//y := x;
-//eispol := eval eispol;
+*/
+
+R := pAdicRing(p, prec);
+if f gt 1 then
+    R<t> := UnramifiedExtension(R, f);
+end if;
+S<x> := PolynomialRing(R);
+y := x;
+eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
