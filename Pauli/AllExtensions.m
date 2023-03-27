@@ -1,4 +1,4 @@
-/////////////////////////////
+///////////////////////////////
 // Indices of inseparability
 
 intrinsic AllIndicesOfInseperability(K,n,j) -> .
