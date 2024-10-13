@@ -49,7 +49,7 @@ intrinsic PReduce(u::RngPadElt) -> .
    return u, v^(-1)+O(pi^bprec);
 end intrinsic;
 
-intrinsic PPowReduce(u::RngPadElt) -> .
+intrinsic pPowReduce(u::RngPadElt) -> .
 {Returns x,y,r such that u=x*y^(p^r), with r as large
 as possible allowing v(x-1)>v(u-1), and v(x-1) maximized
 for r.}
@@ -92,6 +92,27 @@ If A does not have pth roots of unity, returns 0.}
    return 0;
 end intrinsic;
 
+intrinsic pPowRoots(jset::[],e::RngIntElt,p::RngIntElt) -> RngIntElt
+{The input is a jump set of a p-adic field K whose
+absolute ramification index is e.  The output is the
+maximum nonnegative integer d such that K contains a
+primitive p^d root of unity.}
+   k:=#jset;
+   if k eq 0 then
+      return 0;
+   end if;
+   d:=1;
+   while d lt k do
+      if jset[k-d+1] eq Min({p*jset[k-d],jset[k-d]+e}) then
+         d:=d+1;
+      else
+         return d;
+         break;
+      end if;
+   end while;
+   return d;
+end intrinsic;
+
 intrinsic JumpSet(A::RngPad) -> .
 {Outputs the jump set associated to the 1-units of A.
 If A does not contain a primitive pth root of unity,
@@ -102,28 +123,37 @@ returns the empty sequence.}
    n:=Valuation(e,p)+1;
    A:=ChangePrecision(A,n*e+e0+1);
    u:=Zetap(A);
-   jumps:=[IntegerRing()|];
    if u eq 0 then
-      return jumps;
+      return [],0;
    end if;
+   jumps:=[0^^n];
    while Valuation(u-1) lt Precision(u) do
-      a,b,r:=PPowReduce(u);
+      a,b,r:=pPowReduce(u);
       jumps[n-r]:=Valuation(b-1);
       u:=u*b^(-p^r);
    end while;
+   d:=1;
+   while d lt n do
+      if jumps[n-d+1] eq 0 then
+         d:=d+1;
+      else
+         break;
+      end if;
+   end while;
    for i:=2 to n do
-      if not IsDefined(jumps,i) then
+      if jumps[i] eq 0 then
          jumps[i]:=Minimum({p*jumps[i-1],e+jumps[i-1]});
       end if;
    end for;
-   return jumps;
+   return jumps,d;
 end intrinsic;
 
 intrinsic JumpSetJJ(data) -> .
-{Outputs a list of jump sets for 1-units in p-adic 
-fields which are characterized by data in the format given in
+{Outputs a list of jump sets for 1-units in p-adic fields
+which are characterized by data in the format given in
 https://hobbes.la.asu.edu/LocalFields/file-src/File-format }
-   list:=[];
+   jumplist:=[];
+   rootslist:=[];
    for field in data do
       p:=field[1];
       e:=field[3];
@@ -141,8 +171,9 @@ https://hobbes.la.asu.edu/LocalFields/file-src/File-format }
       g:=hom<PolynomialRing(PolynomialRing(IntegerRing()))->S|f,y>;
       EisPoly:=g(field[12][2]);
       A<pi>:=ext<Zq|EisPoly>;
-      jumps:=JumpSet(A);
-      list:=Append(list,jumps);
+      jumps,roots:=JumpSet(A);
+      jumplist:=Append(jumplist,jumps);
+      rootslist:=Append(rootslist,roots);
    end for;
-   return list;
+   return jumplist,rootslist;
 end intrinsic;
