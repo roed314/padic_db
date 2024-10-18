@@ -77,7 +77,6 @@ to define the family.  The output will be an element of Fppolz.}
          error if vx gt vr, "Nonintegral quotient.",ramcoeff,xpower;
          if vx eq vr then
             dr:=Degree(ramcoeff,R.1);
-            vpr:=Valuation(Coefficients(ramcoeff)[1],p);
             xcoeff:=Z!(Coefficients(xpower)[1]);
             rcoeff:=Z!(Coefficients(ramcoeff)[1]);
             frac:=rcoeff/xcoeff;

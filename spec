@@ -6,4 +6,8 @@
   Pauli {
     AllExtensions.m
   }
+  Keating {
+    JumpSetPack.m
+    GenResPack.m
+  }
 }
