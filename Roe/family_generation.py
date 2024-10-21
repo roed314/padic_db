@@ -231,6 +231,8 @@ def get_caches():
     aut = {}
     vis = {}
     for i, rec in enumerate(db.lf_fields.search({}, cache_cols)):
+        if "new_label" not in rec:
+            continue
         if i and i % 10000 == 0: print(i)
         aut[rec["new_label"]] = rec["aut"]
         vis[rec["new_label"]] = str_to_QQtup(rec["visible"])
@@ -341,6 +343,12 @@ def check_all_conductors():
     efcheight_cache = {rec["new_label"]: (ZZ(rec["e"]), ZZ(rec["f"]), ZZ(rec["c"]), get_heights(rec)) for rec in db.lf_fields.search({}, ["new_label", "p", "e", "f", "c", "visible"])}
     for rec in db.lf_fields.search({}, ["new_label", "canonical_filtration", "p"]):
         check_conductor_formula(rec, efcheight_cache)
+
+def check_respoly(basepairs, field_cache, aut, vis):
+    for fam in get_db_families(basepairs, field_cache, aut, vis):
+        if fam.n0 == 1 and fam.f == 1 and fam.e == fam.pw and fam.n < 16:
+            kz = GF(fam.p)['z']
+            assert set(tuple(kz(f) for f in rec["residual_polynomials"]) for rec in fam.fields) == set(tuple(rp) for rp in fam.respoly_iter())
 
 class pAdicSlopeFamily:
     def __init__(self, base, f=1, etame=1, slopes=[], heights=[], rams=[], base_aut=None, base_rams=None, field_cache=None):
@@ -546,10 +554,12 @@ class pAdicSlopeFamily:
     @lazy_attribute
     def residual_polynomials(self):
         assert self.n0 == 1
+        p, e = self.p, self.e
+        if e == 1:
+            return []
         f = self.poly
         S = f.parent()
         x = S.gen()
-        p, e = self.p, self.e
         Rp = S.base_ring().change_ring(GF(p)) # should maybe be GF(q)
         Sp = Rp['z']
         z = Sp.gen()
@@ -571,7 +581,7 @@ class pAdicSlopeFamily:
 
         respolys = []
         verts = self.ramification_polygon
-        for (x0, y0), (x1, y1) in zip(verts[:-1], verts[1:]):
+        for (x0, y0), (x1, y1) in zip(reversed(verts[:-1]), reversed(verts[1:])):
             xdiff = x1 - x0
             slope = (y0 - y1) / xdiff # notice negation
             a, b = slope.numerator(), slope.denominator()
@@ -655,6 +665,32 @@ class pAdicSlopeFamily:
     @lazy_attribute
     def all_stored(self):
         return "t" if self.mass == self.mass_stored else "f"
+
+    def respoly_iter(self):
+        assert self.n0 == 1
+        rp = self.residual_polynomials
+        if rp:
+            Rp = rp[0].base_ring()
+            k = Rp.base_ring()
+            opts = {}
+            for f in rp:
+                for c in f.coefficients():
+                    for v in c.variables():
+                        if v not in opts:
+                            s = str(v)
+                            if s[0] == "a":
+                                opts[v] = [a for a in k if a != 0]
+                            elif s[0] == "b":
+                                opts[v] = list(k)
+                            else:
+                                raise ValueError("c found", self.rams, rp)
+            kz = k['z']
+            D = {v: k(0) for v in Rp.gens()}
+            for vec in cartesian_product([[(v, a) for a in opts[v]] for v in opts]):
+                D.update(dict(vec))
+                yield [kz([c.subs(D) for c in f]) for f in rp]
+        else:
+            yield []
 
     def __iter__(self):
         assert self.n0 == 1

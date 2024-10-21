@@ -1,0 +1,49 @@
+Here we compute the generic residual polynomials for the family
+3.1.9.21b:
+
+> Attach("GenResPack.m");
+> Z3:=pAdicRing(3);
+> Z3a<a1,a2,b1,b2,b3,b4,c1,c2,d>:=PolynomialRing(Z3,9);
+> Z3ax<x>:=PolynomialRing(Z3a);
+> F3:=GF(3);
+> F3a:=PolynomialRing(F3,9);
+> F3A<A1,A2,B1,B2,B3,B4,C1,C2,D>:=FieldOfFractions(F3a);
+> F3Az<z>:=PolynomialRing(F3A);
+> f:=x^9+9*c1*x^6+9*b1*x^5+9*a1*x^4+9*b2*x^3+3;
+> Residual(f,F3Az);
+[
+    z^9 + 2*z^3,
+    2*z^3 + A1*z
+]
+
+This is the family 3.1.12.12a:
+
+> f:=x^12+3*c1*x^6+3*b1*x^5+3*b2*x^4+3*b3*x^2+3*a1*x+3*d;
+> Residual(f,F3Az);                                      
+[
+    z^12 + z^9 + z^3,
+    z^3 + 2*A1/D*z
+]
+
+
+
+
+Here I make up a generic Eisenstein polynomial over a degree 4
+extension of Z_3 and compute its residual polynomials:
+
+> Attach("GenResPack.m");
+> Z3:=pAdicRing(3,20);
+> OK<s>:=UnramifiedExtension(Z3,2);
+> OL<pi>:=ext<OK|OKx.1^2-3>;
+> OLa<a1,a2,b1,b2,b3,b4,c1,c2,d>:=PolynomialRing(OL,9);
+> OLax<x>:=PolynomialRing(OLa);    
+> F9<S>:=GF(9);
+> F9a:=PolynomialRing(F9,9);
+> F9A<A1,A2,B1,B2,B3,B4,C1,C2,D>:=FieldOfFractions(F9a);
+> F9Az<z>:=PolynomialRing(F9A);
+> f:=x^6+3*pi*a1*x^4+9*b3*x^3+27*a2*x+d*pi+3*c1;
+> Residual(f,F9Az);
+[
+    z^6 + 2*z^3,
+    2*z^3 + 2/D^2*z
+]
