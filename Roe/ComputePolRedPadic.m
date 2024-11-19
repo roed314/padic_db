@@ -15,9 +15,17 @@ outfile := Sprintf("/scratch/lf/out_%o_%o/" * fname, p, n);
 p := StringToInteger(p);
 n := StringToInteger(n);
 polys := Split(Read(infile), "\n");
+
+pieces := Split(fname, ".");
+if pieces[3][1] eq "0" then
+    // There is a bug in PolRedPadic for unramified extensions
+    PrintFile(outfile, Sprintf("%o|%o", poly, poly));
+    quit;
+end if;
+
 Zx<x> := PolynomialRing(Integers());
+prec := 4*n; // We use the same prec for all polynomials, since polynomials that need extra precision tend to arise together.
 for poly in polys do
-    prec := 4*n;
     while true do
         try
             R<x> := PolynomialRing(pAdicRing(p, prec));
@@ -32,3 +40,4 @@ for poly in polys do
     PrintFile(outfile, Sprintf("%o|%o", poly, Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
+// x^8+x^4+x^3+x^2+1
