@@ -19,7 +19,7 @@ polys := Split(Read(infile), "\n");
 pieces := Split(fname, ".");
 if pieces[3][1] eq "0" then
     // There is a bug in PolRedPadic for unramified extensions
-    PrintFile(outfile, Sprintf("%o|%o", poly, poly));
+    PrintFile(outfile, Sprintf("%o|%o", polys[1], polys[1]));
     quit;
 end if;
 
