@@ -13,13 +13,22 @@ end function;
 infile := Sprintf("/scratch/lf/poly_%o_%o/" * fname, p, n);
 outfile := Sprintf("/scratch/lf/out_%o_%o/" * fname, p, n);
 p := StringToInteger(p);
+n := StringToInteger(n);
 polys := Split(Read(infile), "\n");
-R<x> := PolynomialRing(pAdicRing(p, 30));
-Zx := PolynomialRing(Integers());
-AssignNames(~Zx, ["x"]);
+Zx<x> := PolynomialRing(Integers());
 for poly in polys do
-    f := eval poly;
-    bundle := PolRedPadic(f);
+    prec := 4*n;
+    while true do
+        try
+            R<x> := PolynomialRing(pAdicRing(p, prec));
+            f := eval poly;
+            bundle := PolRedPadic(f);
+            break;
+        catch err
+            print poly, prec;
+            prec *:= 2;
+        end try;
+    end while;
     PrintFile(outfile, Sprintf("%o|%o", poly, Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
