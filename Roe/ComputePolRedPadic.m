@@ -13,6 +13,6 @@ AssignNames(~Zx, ["x"]);
 for poly in polys do
     f := eval poly;
     bundle := PolRedPadic(f);
-    PrintFile(outfile, Sprintf("%o|%o", poly, Join([Sprint(g) : g in bundle], ",")));
+    PrintFile(outfile, Sprintf("%o|%o", poly, Join([Sprint(Zx!g) : g in bundle], ",")));
 end for;
 quit;
