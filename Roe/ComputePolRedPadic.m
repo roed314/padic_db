@@ -9,7 +9,7 @@ p := StringToInteger(p);
 polys = Split(Read(fname), "\n");
 R<x> := PolynomialRing(pAdicRing(p, 30));
 Zx := PolynomialRing(Integers());
-AssignNames(~Zx, "x");
+AssignNames(~Zx, ["x"]);
 for poly in polys do
     f := eval poly;
     bundle := PolRedPadic(f);
