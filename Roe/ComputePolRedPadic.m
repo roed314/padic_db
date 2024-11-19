@@ -3,6 +3,13 @@
 Attach("../Pauli/polredabs.m");
 SetColumns(0);
 
+function remove_whitespace(X)
+    return Join(Split(Join(Split(X," "),""),"\n"),"");
+end function;
+function sprint(X)
+    return remove_whitespace(Sprint(X));
+end function;
+
 infile := Sprintf("/scratch/lf/poly_%o_%o/" * fname, p, n);
 outfile := Sprintf("/scratch/lf/out_%o_%o/" * fname, p, n);
 p := StringToInteger(p);
@@ -13,6 +20,6 @@ AssignNames(~Zx, ["x"]);
 for poly in polys do
     f := eval poly;
     bundle := PolRedPadic(f);
-    PrintFile(outfile, Sprintf("%o|%o", poly, Join([Sprint(Zx!g) : g in bundle], ",")));
+    PrintFile(outfile, Sprintf("%o|%o", poly, Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
