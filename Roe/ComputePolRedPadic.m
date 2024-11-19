@@ -6,7 +6,7 @@ SetColumns(0);
 infile := Sprintf("/scratch/lf/poly_%o_%o/" * fname, p, n);
 outfile := Sprintf("/scratch/lf/out_%o_%o/" * fname, p, n);
 p := StringToInteger(p);
-polys := Split(Read(fname), "\n");
+polys := Split(Read(infile), "\n");
 R<x> := PolynomialRing(pAdicRing(p, 30));
 Zx := PolynomialRing(Integers());
 AssignNames(~Zx, ["x"]);
