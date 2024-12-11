@@ -537,8 +537,10 @@ intrinsic EisensteinForm(f::RngUPolElt) -> .
   end if;
   Rx<x> := Parent(f);
   R := CoefficientRing(f);
-//"ext",ext;
+  //"ext",ext;
   L := ext[1]`Extension;
+  if IsUnramified(L) then
+    return 
   
   //if BaseRing(L) eq R then 
   //  return f, L.1, x; 
