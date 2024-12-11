@@ -1,4 +1,4 @@
-from sage.all import euler_phi, lazy_attribute, point, line, polygon, frac, floor, lcm, mod, cartesian_product, ZZ, QQ, PolynomialRing, OrderedPartitions, srange, prime_range, prime_pi, next_prime, previous_prime, gcd, conway_polynomial, GF, binomial, cached_function
+from sage.all import euler_phi, lazy_attribute, point, line, polygon, frac, floor, lcm, mod, cartesian_product, ZZ, QQ, PolynomialRing, OrderedPartitions, srange, prime_range, prime_pi, next_prime, previous_prime, gcd, conway_polynomial, GF, binomial, cached_function, infinity, latex
 from sage.databases.cremona import cremona_letter_code
 from lmfdb import db
 from lmfdb.galois_groups.transitive_group import knowl_cache, transitive_group_display_knowl
@@ -10,43 +10,48 @@ import re
 import os
 FAMILY_RE = re.compile(r'(\d+(?:\.\d+\.\d+\.\d+)?)-(?:(\d+)\.(\d+(?:_\d+)*))?')
 
-columns = [("label", "text"),
-           ("ctr", "smallint"),
-           ("base", "text"),
-           ("base_aut", "smallint"),
-           ("e0", "smallint"),
-           ("e", "smallint"),
-           ("e_absolute", "smallint"),
-           ("f0", "smallint"),
-           ("f", "smallint"),
-           ("f_absolute", "smallint"),
-           ("n0", "smallint"),
-           ("n", "smallint"),
-           ("n_absolute", "smallint"),
-           ("w", "smallint"),
-           ("p", "integer"),
-           ("c0", "smallint"),
-           ("c", "smallint"),
-           ("c_absolute", "smallint"),
-           ("visible", "text"),
-           ("slopes", "text"),
-           ("heights", "text"),
-           ("scaled_heights", "text"),
-           ("rams", "text"),
-           ("scaled_rams", "text"),
-           ("field_count", "integer"),
-           ("packet_count", "integer"),
-           ("ambiguity", "smallint"),
-           ("mass", "double precision"),
-           ("mass_stored", "text"),
-           ("mass_missing", "double precision"),
-           ("mass_display", "text"),
-           ("all_stored", "boolean"),
-           ("slope_multiplicities", "smallint[]"),
-           ("wild_segments", "smallint"),
-           ("poly", "text")]
+columns = [
+    ("label", "text"),
+    ("ctr", "smallint"),
+    ("base", "text"),
+    ("base_aut", "smallint"),
+    ("e0", "smallint"),
+    ("e", "smallint"),
+    ("e_absolute", "smallint"),
+    ("f0", "smallint"),
+    ("f", "smallint"),
+    ("f_absolute", "smallint"),
+    ("n0", "smallint"),
+    ("n", "smallint"),
+    ("n_absolute", "smallint"),
+    ("w", "smallint"),
+    ("p", "integer"),
+    ("c0", "smallint"),
+    ("c", "smallint"),
+    ("c_absolute", "smallint"),
+    ("rf0", "smallint[]"), # TODO
+    ("visible", "text"),
+    ("slopes", "text"),
+    ("heights", "text"),
+    ("scaled_heights", "text"),
+    ("rams", "text"),
+    ("scaled_rams", "text"),
+    ("field_count", "integer"),
+    ("packet_count", "integer"),
+    ("ambiguity", "smallint"),
+    ("mass", "double precision"),
+    ("mass_stored", "text"),
+    ("mass_missing", "double precision"),
+    ("mass_display", "text"),
+    ("all_stored", "boolean"),
+    ("slope_multiplicities", "smallint[]"),
+    ("wild_segments", "smallint"),
+    ("poly", "text"),
+    ("label_absolute", "text"),
+    ("rams_absolute", "text"),
+]
 
-cache_cols = ["p", "e", "f", "c", "family", "packet", "label", "new_label", "coeffs", "galT", "galois_label", "galois_degree", "slopes", "ind_of_insep", "associated_inertia", "t", "u", "aut", "visible", "hidden", "canonical_filtration", "residual_polynomials"]
+cache_cols = ["p", "e", "f", "c", "family", "packet", "label", "new_label", "coeffs", "galT", "galois_label", "galois_degree", "slopes", "ind_of_insep", "associated_inertia", "t", "u", "aut", "visible", "hidden", "subfield", "residual_polynomials", "rf"]
 def cache_key(rec):
     return rec["p"], rec["f"], rec["e"], rec["visible"]
 
@@ -196,6 +201,7 @@ def write_filtration(fname):
     #        yield from pAdicSlopeFamily.families(base, w, tame_e=tame_e[base], tame_f=tame_f[base], tame_aut=tame_aut[base], field_cache=field_cache)
 
 def get_basepairs():
+    raise RuntimeError("Old version")
     basepairs = set()
     def getn(label):
         _, e, f, _ = label.split(".", 3)
@@ -221,29 +227,39 @@ def relative_basepairs():
     for rec in db.lf_fields.search({"n": {"$gt": 1, "$lt": 16}}, ["new_label", "n", "p", "e"]):
         p, n, e = ZZ(rec["p"]), ZZ(rec["n"]), ZZ(rec["e"])
         for m in srange(2, 48//n):
-            if e == 1 or m.is_power_of(p):
-                # If the base is not unramified, we can only support totally wildly ramified degrees
-                basepairs.append((rec["new_label"], m))
+            # We used to only support extensions where the base was part of the canonical filtration of the absolute field.
+            #if e == 1 or m.is_power_of(p):
+            # If the base is not unramified, we can only support totally wildly ramified degrees
+            basepairs.append((rec["new_label"], m))
     return basepairs
+
+def get_field_data():
+    field_data = {rec["new_label"]: rec for rec in db.lf_fields.search({}, cache_cols) if "new_label" in rec}
+    for rec in field_data.values():
+        rec["visible"] = str_to_QQtup(rec["visible"])
+    return field_data
 
 def get_caches():
     field_cache = defaultdict(list)
-    aut = {}
-    vis = {}
+    field_data = {}
     for i, rec in enumerate(db.lf_fields.search({}, cache_cols)):
         if "new_label" not in rec:
             continue
         if i and i % 10000 == 0: print(i)
-        aut[rec["new_label"]] = rec["aut"]
-        vis[rec["new_label"]] = str_to_QQtup(rec["visible"])
         field_cache[cache_key(rec)].append(rec)
-    return field_cache, aut, vis
+        field_data[rec["new_label"]] = dict(rec)
+        field_data[rec["new_label"]]["visible"] = str_to_QQtup(rec["visible"])
+    return field_cache, field_data
 
-def get_db_families(basepairs, field_cache, aut, vis):
+def get_db_families(basepairs, field_cache, field_data):
     for i, (base, n) in enumerate(basepairs):
         if i and i % 100 == 0:
             print(i, base, n)
-        yield from pAdicSlopeFamily.families(base, n, base_aut=aut.get(base), base_vis=vis.get(base), field_cache=field_cache)
+        yield from pAdicSlopeFamily.families(base, n, field_cache=field_cache, field_data=field_data)
+
+def get_polynomials(basepairs, field_cache, field_data):
+    for fam in get_db_families(basepairs, field_cache, field_data):
+        yield from fam
 
 def write_col(family, col, typ):
     if col == "mass":
@@ -255,10 +271,12 @@ def write_col(family, col, typ):
         out = "{" + out[1:-1] + "}"
     return out
 
-def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, aut=None, vis=None):
-    if field_cache is None or aut is None or vis is None:
-        field_cache, aut, vis = get_caches()
+def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, field_data=None):
+    # All absolute basepairs should come before relative basepairs, and the absolute basepair corresponding to every relative basepair present must be included.
+    if field_cache is None or field_data is None:
+        field_cache, field_data = get_caches()
     Ztz = PolynomialRing(PolynomialRing(ZZ, "t"), "z")
+    absolute_lookup = {}
     with open(famfile, "w") as Ffam:
         _ = Ffam.write("|".join(col for (col,typ) in columns) + "\n")
         _ = Ffam.write("|".join(typ for (col,typ) in columns) + "\n\n")
@@ -266,8 +284,8 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
             _ = Flab.write("label|family|subfamily|new_label\ntext|text|text|text\n\n")
             with open(corfile, "w") as Fcor:
                 _ = Fcor.write("family|field\ntext|text\n\n")
-                for family in get_db_families(basepairs, field_cache, aut, vis):
-                    _ = Ffam.write("|".join(write_col(family, col, typ) for (col,typ) in columns) + "\n")
+                for family in get_db_families(basepairs, field_cache, field_data):
+                    key = (family.p, family.f_absolute, family.e_absolute) + tuple(family.visible)
                     if family.n0 == 1:
                         respoly = sorted((tuple(Ztz(f) for f in rec["residual_polynomials"]), i) for (i, rec) in enumerate(family.fields))
                         subctr = 0
@@ -285,12 +303,33 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
                             ctr += 1
                         for rec in family.fields:
                             _ = Flab.write(f"{rec['label']}|{family.label}|{rec['subfamily']}|{rec['new_label']}\n")
+                        family.label_absolute = absolute_lookup[key] = family.label
+                    else:
+                        family.label_absolute = absolute_lookup[key]
                     for rec in family.fields:
                         _ = Fcor.write(f"{family.label}|{rec['new_label']}\n")
+                    _ = Ffam.write("|".join(write_col(family, col, typ) for (col,typ) in columns) + "\n")
+
+def write_polynomials(poly_folder, basepairs, field_cache, field_data, batch_size=64):
+    for fam in get_db_families(basepairs, field_cache, field_data):
+        ctr = 0
+        F = None
+        try:
+            for poly in fam:
+                if ctr % batch_size == 0:
+                    if F is not None:
+                        F.close()
+                        F = None
+                    F = open(poly_folder / f"{fam.label}.{ctr // batch_size}", "w")
+                ctr += 1
+                _ = F.write(f"{str(poly).replace(' ','')}\n")
+        finally:
+            if F is not None:
+                F.close()
 
 def rams_to_heights(rams, p):
     w = len(rams)
-    return [sum(p**(k-j) * rams[j] for j in range(k+1)) for k in range(w)]
+    return [(p-1)*sum(p**(k-j) * rams[j] for j in range(k+1)) for k in range(w)]
 
 def slopes_to_heights(slopes, p, etame):
     heights = []
@@ -304,13 +343,26 @@ def slopes_to_heights(slopes, p, etame):
 
 def heights_to_rams(heights, p):
     w = len(heights)
-    return [heights[0]] + [heights[k] - p*heights[k-1] for k in range(1,w)]
+    return [heights[0] / (p - 1)] + [(heights[k] - p*heights[k-1]) / (p - 1) for k in range(1,w)]
 
 def heights_to_slopes(heights, p, etame):
     w = len(heights)
     return [heights[0] / (etame * (p-1))] + [(heights[k] - heights[k-1]) / (etame * euler_phi(p**(k+1))) for k in range(1,w)]
 
+def sort_rams(rams, p):
+    # Given rams that are not sorted, return the sorted version.  See David Robert's notes, section 2.8
+    # We just use a simple bubble sort since the number of rams will always be very small (at most 5 for (2,32))
+    rams = list(rams) # Shouldn't modify input
+    w = len(rams)
+    for i in range(1,w):
+        for j in range(w-i):
+            a, b = rams[j:j+2]
+            if a > b:
+                rams[j:j+2] = [b, b + p*(a-b)]
+    return rams
+
 def check_conductor_formula(rec, efcheight_cache):
+    raise RuntimeError("Old version")
     def ef(label):
         _, e, f, _ = label.split(".", 3)
         return ZZ(e), ZZ(f)
@@ -344,20 +396,54 @@ def check_all_conductors():
     for rec in db.lf_fields.search({}, ["new_label", "canonical_filtration", "p"]):
         check_conductor_formula(rec, efcheight_cache)
 
-def check_respoly(basepairs, field_cache, aut, vis):
-    for fam in get_db_families(basepairs, field_cache, aut, vis):
-        if fam.n0 == 1 and fam.f == 1 and fam.e == fam.pw and fam.n < 16:
+def check_respoly(basepairs, field_cache, field_data):
+    for fam in get_db_families(basepairs, field_cache, field_data):
+        if fam.n0 == 1 and fam.f == 1 and fam.etame == 1 and fam.n < 16:
             kz = GF(fam.p)['z']
             assert set(tuple(kz(f) for f in rec["residual_polynomials"]) for rec in fam.fields) == set(tuple(rp) for rp in fam.respoly_iter())
 
+def check_respoly2(basepairs, field_cache, field_data):
+    for fam in get_db_families(basepairs, field_cache, field_data):
+        if fam.n0 == 1 and fam.f == 1 and fam.n < 16:
+            kz = GF(fam.p)['z']
+            assert set(tuple(kz(f) for f in rec["residual_polynomials"]) for rec in fam.fields) == set(tuple(rp) for rp in fam.respoly2_fixed_iter())
+
+
+def respoly_class(rp, slopes):
+    k = rp[0].base_ring()
+    z = rp[0].parent().gen()
+    cls = set()
+    for delta in k:
+        if delta == 0:
+            continue
+        gamma = 1
+        rvec = []
+        for s, rpoly in zip(slopes, rp):
+            h, e = s.numerator(), s.denominator()
+            gamma *= delta**(-h * rpoly.degree())
+            rvec.append(gamma * rpoly(delta**h * z))
+        cls.add(tuple(rvec))
+    return cls
+
+@cached_function
+def respoly_rep(rp, slopes):
+    print("Computing")
+    cls = respoly_class(rp, slopes)
+    rep = min(cls)
+    for rp1 in cls:
+        respoly_rep.set_cache(rep, (rp1, slopes))
+    return rep
+
 class pAdicSlopeFamily:
-    def __init__(self, base, f=1, etame=1, slopes=[], heights=[], rams=[], base_aut=None, base_rams=None, field_cache=None):
-        # FIXME tame->base, include etame, get e and f from base
-        self.base, self.f, self.etame, self.base_aut = base, f, etame, base_aut
+    def __init__(self, base, f=1, etame=1, slopes=[], heights=[], rams=[], base_data=None, field_cache=None):
+        if base_data is None:
+            base_data = db.lf_fields.lucky({"new_label": base}, cache_cols)
+        self.base, self.f, self.etame, self.base_aut, self.oldbase = base, f, etame, base_data["aut"], base_data["label"]
         p, f0, e0, base_fam, base_i = base.split(".")
         p, f0, e0 = ZZ(p), ZZ(f0), ZZ(e0)
         w0, e0tame = e0.val_unit(p)
         self.c0 = c0 = ZZ(re.split(r"\D", base_fam)[0])
+        self.rf0 = base_data["rf"]
         # For now, these slopes are Serre-Swan slopes, not Artin-Fontaine slopes
         assert p.is_prime()
         self.w = w = max(len(L) for L in [slopes, heights, rams])
@@ -374,6 +460,7 @@ class pAdicSlopeFamily:
         self.slopes = slopes
         self.artin_slopes = [s + 1 for s in slopes]
         # Visible is absolute, for use in matching with fields
+        base_rams = base_data.get("rams")
         if base_rams is None:
             if e0.gcd(p) == 1:
                 base_rams = []
@@ -381,9 +468,10 @@ class pAdicSlopeFamily:
                 base_slopes = [x - 1 for x in str_to_QQtup(db.lf_fields.lucky({"new_label":base}, "visible"))]
                 base_rams = heights_to_rams(slopes_to_heights(base_slopes, p, 1), p)
         if base_rams:
-            full_rams = base_rams + rams
-            self.visible = [x + 1 for x in heights_to_slopes(rams_to_heights(full_rams, p), p, e0tame*etame)]
+            self.rams_absolute = sort_rams([etame * ram for ram in base_rams] + rams, p)
+            self.visible = [x + 1 for x in heights_to_slopes(rams_to_heights(self.rams_absolute, p), p, e0tame*etame)]
         else:
+            self.rams_absolute = rams
             self.visible = [x/e0tame + 1 for x in slopes]
         self.heights = heights
         self.rams = rams
@@ -535,7 +623,7 @@ class pAdicSlopeFamily:
         return poly
 
     @lazy_attribute
-    def ramification_polygon(self):
+    def ramification_polygon_old(self):
         # Old-style for now
         p = self.p
         L = [(self.e, 0)]
@@ -550,6 +638,28 @@ class pAdicSlopeFamily:
                 L.append(cur)
         L.reverse()
         return L
+
+    @lazy_attribute
+    def ramification_polygon_new(self):
+        indices = self.generic_indices_insep
+        p, w, pw, e, etame = self.p, self.w, self.pw, self.e, self.etame
+        assert len(indices) == w + 1
+        corners = [(-pw, 0)]
+        edges = []
+        a = w
+        while a > 0:
+            smallslope = min((indices[i] - indices[a]) / (p**a - p**i) for i in range(a))
+            newedge = [corners[-1]]
+            for i in range(1, a + 1):
+                if (indices[a - i] - indices[a]) / (p**a - p**(a-i)) == smallslope:
+                    newedge.append((-p**(a-i), indices[a-i]))
+            edges.append(newedge)
+            corners.append(newedge[-1])
+            a = corners[-1][0].valuation(p)
+        if etame > 1:
+            corners.insert(0, (-e, 0))
+            edges.insert(0, [(-e, 0), (-pw, 0)])
+        return corners, edges
 
     @lazy_attribute
     def residual_polynomials(self):
@@ -580,7 +690,7 @@ class pAdicSlopeFamily:
             return pRed(S([j.binomial(i) * f[j] for j in srange(e + 1)]) % f)
 
         respolys = []
-        verts = self.ramification_polygon
+        verts = self.ramification_polygon_old
         for (x0, y0), (x1, y1) in zip(reversed(verts[:-1]), reversed(verts[1:])):
             xdiff = x1 - x0
             slope = (y0 - y1) / xdiff # notice negation
@@ -600,6 +710,80 @@ class pAdicSlopeFamily:
                     quot = frac * (ramcoeff // (rcoeff * x**dr))
                     newrespoly += quot[0].change_ring(GF(p)) * z**j
             respolys.append(newrespoly)
+        return respolys
+
+    @lazy_attribute
+    def generic_indices_insep(self):
+        """
+        The indices of inseparability for the extension defined by substituting 1 for all the generic variables in this family
+        """
+        p, e, e0, w = self.p, self.e, self.e0, self.w
+        f_generic = self.poly
+        gens = f_generic.base_ring().gens()
+        if e0 > 1:
+            # need to keep pi
+            Zx = ZZ['pi']['x']
+            gens = gens[:-1]
+            def valuation(c):
+                if c == 0:
+                    return infinity
+                return min(i + e0*d.valuation(p) for (i, d) in c.dict())
+        else:
+            Zx = ZZ['x']
+            def valuation(c):
+                return c.valuation(p)
+        D = {g: 1 for g in gens}
+        f = Zx({i: c.subs(D) for (i, c) in f_generic.dict().items()})
+        vals = [valuation(c) for c in f]
+        tilde = [0] * (w + 1)
+        indices = [0] * (w + 1)
+        for j in range(w):
+            tilde[w - j - 1] = min(i + e*vals[i] - e for i in srange(1, e) if i.valuation(p) <= w - j - 1)
+            indices[w - j - 1] = min(tilde[w - j - 1], indices[w - j] + e*e0)
+        return indices
+
+    @lazy_attribute
+    def residual_polynomials2(self):
+        p, f, f0, e, etame = self.p, self.f, self.f0, self.e, self.etame
+        _, edges = self.ramification_polygon_new
+        if etame > 1:
+            edges = edges[1:]
+        poly = self.poly
+        S = poly.parent()
+        R = S.base_ring()
+        names = tuple(poly.base_ring().variable_names())
+        if "pi" in names:
+            pi = R.gens()[-1]
+            names = names[:-1]
+        else:
+            pi = p
+        if "d" in names:
+            names = names[:-1] + ("dinv",)
+        q = p**(f * f0)
+        Rp = GF(q)[names]
+        Sp = Rp['z']
+        z = Sp.gen()
+        if "dinv" in names:
+            mdinv = -Rp.gens()[-1]
+        else:
+            mdinv = -Rp(poly[0] // pi)
+        respolys = []
+        for E in edges:
+            rpoly = {}
+            p0 = -E[-1][0]
+            slope = (E[-1][1] - E[0][1]) / (E[-1][0] - E[0][0])
+            den = slope.denominator()
+            for v in E:
+                pj = -v[0]
+                aj = (v[1] - 1) // e
+                bj = v[1] - e * aj
+                assert (pj - p0) % den == 0
+                rpoly[(pj-p0)//den] = Rp((binomial(bj, pj) * poly[bj]) // pi**(aj + 1)) * mdinv**(aj + 1)
+            respolys.append(Sp(rpoly))
+        if etame > 1:
+            tameres = (z + 1)**e - 1
+            tameres //= z**(tameres.valuation())
+            respolys.insert(0, tameres)
         return respolys
 
     @lazy_attribute
@@ -653,14 +837,17 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def mass_display(self):
-        m = self.mass
-        if m.denominator() == 1 or m.floor() == 0:
-            return m
-        return f"{m.floor()}+{m-m.floor()}"
+        return self.mass
+        #m = self.mass
+        #if m.denominator() == 1:
+        #    return m
+        #if m.floor() == 0:
+        #    return latex(m)
+        #return f"{m.floor()} {latex(m-m.floor())}"
 
     @lazy_attribute
     def ambiguity(self):
-        return p**self.gamma
+        return self.p**self.gamma
 
     @lazy_attribute
     def all_stored(self):
@@ -692,34 +879,105 @@ class pAdicSlopeFamily:
         else:
             yield []
 
+    def respoly2_iter(self):
+        rp = self.residual_polynomials2
+        seen = set()
+        if rp:
+            Rp = rp[0].base_ring()
+            k = Rp.base_ring()
+            q = k.cardinality()
+            u = gcd(q - 1, self.etame)
+            if u > 1:
+                if q == self.p:
+                    # Totally ramified
+                    for a in range(2,q):
+                        a = k(a)
+                        if a.multiplicative_order() == q - 1:
+                            break
+                else:
+                    a = k.gen()
+                    assert a.multiplicative_order() == q - 1
+                dinvs = [a**-i for i in range(u)]
+            opts = {}
+            for rpoly in rp:
+                for c in rpoly.coefficients():
+                    for v in c.variables():
+                        if v not in opts:
+                            s = str(v)
+                            if s[0] == "a":
+                                opts[v] = [a for a in k if a != 0]
+                            elif s[0] == "b":
+                                opts[v] = list(k)
+                            elif s == "dinv":
+                                opts[v] = dinvs
+                            else:
+                                raise ValueError("c found", self.rams, rp)
+            kz = k['z']
+            D = {v: k(0) for v in Rp.gens()}
+            for vec in cartesian_product([[(v, a) for a in opts[v]] for v in opts]):
+                D.update(dict(vec))
+                new = [kz([c.subs(D) for c in rpoly]) for rpoly in rp]
+                ntup = tuple(new)
+                if ntup not in seen:
+                    seen.add(ntup)
+                    yield new
+        else:
+            yield []
+
+    def respoly2_fixed_iter(self):
+        # Convert to current residual polynomial convention
+        _, edges = self.ramification_polygon_new
+        q = self.p ** (self.f * self.f0)
+        kz = GF(q)['z']
+        for rp in self.respoly2_iter():
+            fixed = []
+            assert len(edges) == len(rp)
+            for E, rpoly in zip(edges, rp):
+                start = -E[-1][0]
+                slope = (E[1][1] - E[0][1]) / (E[1][0] - E[0][0])
+                a, b = slope.numerator(), slope.denominator()
+                D = rpoly.dict()
+                assert all((i - start) % b == 0 for i in D)
+                fixed.append(kz({(i - start) // b: c for (i, c) in D.items()}))
+            yield fixed
+
     def __iter__(self):
         assert self.n0 == 1
         f, e, etame, generic = self.f, self.e, self.etame, self.poly
-        R = generic.base_ring()
+        S = generic.parent()
+        R = S.base_ring()
         Zx = PolynomialRing(ZZ, "x")
+        x = Zx.gen()
         names = R.variable_names()
         p = self.p
-        opts = {"a": [ZZ(a) for a in range(1, p)],
-                "b": [ZZ(b) for b in range(p)],
-                "c": [ZZ(c) for c in range(p)]}
+        q = p**f
         opts = {}
         if f > 1:
             # Need to do something else if no conway polynomial is available
             k = GF(q, 'x', conway_polynomial(p, f))
             d0 = k.gen()
-            nu = k.polynomial().change_ring(ZZ)
-            bopts = [y.polynomial().change_ring(ZZ) for y in k]
-            assert bopts[0] == 0
-            aopts = bopts[1:]
-            for u, v, _ in self.red:
-                s = v + u/e - 1
-                cnt = self.slopes.count(s)
-                
+            nu = Zx(k.polynomial())
+            bopts = [Zx(y.polynomial()) for y in k]
+            # We should really find the generic residual polynomial, specialize at a given
+            # set of a and b values, compute Hermite normal form and pick representatives
+            # for the quotient to find copts.  But this is annoying, so instead
+            # we accept duplication since the bulk of the cases will have f=1 anyway
+            #for u, v, _ in self.red:
+            #    s = v + u/e - 1
+            #    cnt = self.slopes.count(s)
+        else:
+            bopts = [ZZ(b) for b in range(p)]
+        assert bopts[0] == 0
+        aopts = bopts[1:]
+        copts = bopts
+
         for name in names:
-            if name[0] == "b":
-                opts[name] = bopts
-            elif name[0] == "a":
+            if name[0] == "a":
                 opts[name] = aopts
+            elif name[0] == "b":
+                opts[name] = bopts
+            elif name[0] == "c":
+                opts[name] = copts
         if self.w > 0 or "d" in names:
             if "d" in names:
                 # Pick minimal d in the etame-th power classes in F_q.  When f>1 need to use nu...
@@ -733,11 +991,13 @@ class pAdicSlopeFamily:
                     while d0.multiplicative_order() != p - 1:
                         d0 += 1
                     opts["d"] = [ZZ(d0**i) for i in range(dtop)]
-            for vec in cartesian_product([opts[name[0]] for name in names]):
-                subber = dict(zip(names, vec))
+            for vec in cartesian_product([opts[name] for name in names]):
+                base_map = R.hom(vec)
                 if f > 1:
-                    subber["nu"] = nu
-                yield Zx(generic.subs(**subber))
+                    Shom = S.hom([nu], base_map=base_map)
+                else:
+                    Shom = S.hom([x], base_map=base_map)
+                yield Shom(generic)
         elif e > 1:
             # One possible tame extension
             return nu**e + p
@@ -763,7 +1023,9 @@ class pAdicSlopeFamily:
             L = list(db.lf_fields.search(self.field_query, cache_cols))
         if self.n0 == 1:
             return L
-        return [rec for rec in L if self.base in rec["canonical_filtration"]]
+        # Prior version that only suppoted bases in the canonical filtration
+        #return [rec for rec in L if self.base in rec["canonical_filtration"]]
+        return [rec for rec in L if self.oldbase in rec["subfield"]]
 
     @lazy_attribute
     def field_count(self):
@@ -778,7 +1040,7 @@ class pAdicSlopeFamily:
         return len(set(rec["packet"] for rec in self.fields))
 
     @classmethod
-    def families(cls, base, n, f=None, base_aut=None, base_vis=None, field_cache=None):
+    def families(cls, base, n, f=None, field_cache=None, field_data=None):
         if isinstance(base, (Integer, int)):
             p, f0, e0 = base, ZZ(1), ZZ(1)
             base = f"{base}.1.1.0a1.1"
@@ -787,51 +1049,47 @@ class pAdicSlopeFamily:
             p, f0, e0 = ZZ(p), ZZ(f0), ZZ(e0)
         n0 = e0 * f0
         n = ZZ(n)
+        if field_data is None:
+            field_data = get_field_data()
         if field_cache is None:
             field_cache = defaultdict(list)
             for rec in db.lf_fields.search({"p": p, "n": n*n0}, cache_cols):
-                if n0 == 1 or base in rec["canonical_filtration"]:
+                #if n0 == 1 or base in rec["canonical_filtration"]:
+                if n0 == 1 or field_data[base]["label"] in rec["subfield"]:
                     field_cache[cache_key(rec)].append(rec)
-        if n0 == 1:
-            base_aut = 1
-            base_vis = []
-        elif base_aut is None or base_vis is None:
-            rec = db.lf_fields.lucky({"new_label": base}, ["aut", "visible"])
-            base_aut, base_vis = rec["aut"], str_to_QQtup(rec["visible"])
-        if f is None and n0 == 1:
+        if f is None:
             for f in reversed(n.divisors()):
                 # maybe this should have base_aut = f?
-                yield from cls.families(base, n // f, f, base_aut=1, base_vis=base_vis, field_cache=field_cache)
+                yield from cls.families(base, n, f, field_cache=field_cache, field_data=field_data)
         else:
-            # We are looking for totally ramified extensions of the base
-            if f is None:
-                f = 1
-            w, etame = n.val_unit(p)
-            if n0 > 1:
-                assert f == 1
-            if e0 > 1:
-                assert etame == 1
-            if base_vis:
-                # etame must equal base_etame in this case
-                w0, e0tame = e0.val_unit(p)
-                base_slopes = [s - 1 for s in base_vis]
-                base_rams = heights_to_rams(slopes_to_heights(base_slopes, p, e0tame), p)
-                base_lastram = base_rams[-1]
+            e = n // f
+            w, etame = e.val_unit(p)
+            if n0 == 1:
+                base_data = {"aut": 1, "visible": [], "rf": [1,0], "rams": [], "label": f"{p}.1.0.1"}
             else:
-                base_lastram = 0
-                base_rams = []
+                base_data = field_data[base]
+                if base_data["visible"]:
+                    w0, e0tame = e0.val_unit(p)
+                    base_slopes = [s - 1 for s in base_data["visible"]]
+                    base_data["rams"] = heights_to_rams(slopes_to_heights(base_slopes, p, e0tame), p)
+                else:
+                    base_data["rams"] = []
 
             def R(e, rho):
-                den = sum(p**i for i in range(rho))
-                nums = [n for n in range(1, p*e*den) if n % p != 0 and n > base_lastram * den]
-                if rho == 1 and base_lastram < p*e:
-                    nums.append(p*e*den)
+                #den = sum(p**j for j in range(rho))
+                #nums = [n for n in range(1, p*e*den) if n % p != 0 and n > base_lastram * den]
+                #if rho == 1 and base_lastram < p*e:
+                #    nums.append(p*e*den)
+                den = p**rho - 1
+                nums = [n for n in range(1, p*e*den//(p-1)) if n % p != 0]
+                if rho == 1:
+                    nums.append(p*e*den//(p-1))
                 return [n / den for n in nums]
 
             # We can't compute the label intrinsically, so we have to collect and sort
             fams = []
             if w == 0:
-                fams.append(cls(base, f, etame, base_aut=base_aut, base_rams=base_rams, rams=[], field_cache=field_cache))
+                fams.append(cls(base, f, etame, base_data=base_data, rams=[], field_cache=field_cache))
             else:
                 for mvec in reversed(OrderedPartitions(w)):
                     Mvec = [0]
@@ -843,7 +1101,7 @@ class pAdicSlopeFamily:
                             rmvec = []
                             for r, m in zip(rvec, mvec):
                                 rmvec.extend([r] * m)
-                            fams.append(cls(base, f, etame, base_aut=base_aut, base_rams=base_rams, rams=rmvec, field_cache=field_cache))
+                            fams.append(cls(base, f, etame, base_data=field_data[base], rams=rmvec, field_cache=field_cache))
                 fams.sort(key=lambda fam: (fam.c, len(fam.slope_multiplicities), list(reversed(fam.slope_multiplicities)), fam.rams))
             ctr = Counter()
             for fam in fams:
@@ -852,10 +1110,10 @@ class pAdicSlopeFamily:
                 ctr[fam.c] += 1
                 if n0 == 1:
                     # Absolute labels
-                    fam.label = f"{p}.{f}.{n}.{fam.c}{code}"
+                    fam.label = f"{p}.{f}.{e}.{fam.c}{code}"
                 else:
                     # Relative labels
-                    fam.label = f"{base}-{n}.{fam.c}{code}"
+                    fam.label = f"{base}-{f}.{e}.{fam.c}{code}"
             yield from fams
 
 
