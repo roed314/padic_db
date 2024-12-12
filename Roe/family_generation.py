@@ -287,12 +287,13 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
                 for family in get_db_families(basepairs, field_cache, field_data):
                     key = (family.p, family.f_absolute, family.e_absolute) + tuple(family.visible)
                     if family.n0 == 1:
-                        respoly = sorted((tuple(Ztz(f) for f in rec["residual_polynomials"]), i) for (i, rec) in enumerate(family.fields))
+                        fields = sorted(family.fields, key=family.field_sort_key)
+                        respoly = sorted((tuple(Ztz(f) for f in rec["residual_polynomials"]), i) for (i, rec) in enumerate(fields))
                         subctr = 0
                         sublook = {}
                         prev = None
                         for ftup, i in respoly:
-                            rec = family.fields[i]
+                            rec = fields[i]
                             if ftup != prev:
                                 prev = ftup
                                 sublook[ftup] = subctr
@@ -301,7 +302,7 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
                             rec["subfamily"] = f"{family.label}{subctr}"
                             rec["new_label"] = f"{family.label}{subctr}.{ctr}"
                             ctr += 1
-                        for rec in family.fields:
+                        for rec in fields:
                             _ = Flab.write(f"{rec['label']}|{family.label}|{rec['subfamily']}|{rec['new_label']}\n")
                         family.label_absolute = absolute_lookup[key] = family.label
                     else:
@@ -953,10 +954,9 @@ class pAdicSlopeFamily:
         q = p**f
         opts = {}
         if f > 1:
-            # Need to do something else if no conway polynomial is available
-            k = GF(q, 'x', conway_polynomial(p, f))
+            nu = self.nu
+            k = GF(q, 'x', nu)
             d0 = k.gen()
-            nu = Zx(k.polynomial())
             bopts = [Zx(y.polynomial()) for y in k]
             # We should really find the generic residual polynomial, specialize at a given
             # set of a and b values, compute Hermite normal form and pick representatives
@@ -1026,6 +1026,45 @@ class pAdicSlopeFamily:
         # Prior version that only suppoted bases in the canonical filtration
         #return [rec for rec in L if self.base in rec["canonical_filtration"]]
         return [rec for rec in L if self.oldbase in rec["subfield"]]
+
+    @lazy_attribute
+    def nu(self):
+        p, f = self.p, self.f
+        q = p**f
+        Zx = PolynomialRing(ZZ, "x")
+        # Need to do something else if no conway polynomial is available
+        k = GF(q, 'x', conway_polynomial(p, f))
+        return Zx(k.polynomial())
+
+    @lazy_attribute
+    def field_sort_key(self):
+        assert self.n0 == 1
+        p, f, e, nu = self.p, self.f, self.e, self.nu
+        def sort_key(poly):
+            # poly should be in Eisenstein form with respect to self.nu
+            if e == 1:
+                # No sorting required
+                return poly
+            if f > 1:
+                vec = []
+                while poly.degree() > 0:
+                    poly, r = poly.quo_rem(nu)
+                    assert r % p == 0
+                    vec.extend([r[j] // p for j in range(f)])
+            else:
+                assert all(c % p == 0 for c in list(poly)[:-1])
+                vec = [c // p for c in list(poly)[:-1]]
+            krasner_bound = (e * self.slopes[-1]).floor()
+            i = 0
+            ans = [0 for _ in range(f*(krasner_bound + 1))]
+            while i <= krasner_bound:
+                for j in range(f):
+                    sig = (f*i + j)
+                    bar = sig % len(vec)
+                    vec[bar], ans[sig] = vec[bar].quo_rem(p)
+                i += 1
+            return ans
+        return sort_key
 
     @lazy_attribute
     def field_count(self):

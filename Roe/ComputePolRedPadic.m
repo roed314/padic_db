@@ -31,13 +31,14 @@ for poly in polys do
             R<x> := PolynomialRing(pAdicRing(p, prec));
             f := eval poly;
             bundle := PolRedPadic(f);
+            best := Distinguished(bundle);
             break;
         catch err
             print poly, prec;
             prec *:= 2;
         end try;
     end while;
-    PrintFile(outfile, Sprintf("%o|%o", poly, Join([sprint(Zx!g) : g in bundle], ", ")));
+    PrintFile(outfile, Sprintf("%o|%o|%o", poly, sprint(Zx!best), Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
 // x^8+x^4+x^3+x^2+1
