@@ -1,4 +1,4 @@
-from sage.all import euler_phi, lazy_attribute, point, line, polygon, frac, floor, lcm, mod, cartesian_product, ZZ, QQ, PolynomialRing, OrderedPartitions, srange, prime_range, prime_pi, next_prime, previous_prime, gcd, conway_polynomial, GF, binomial, cached_function, infinity, latex
+from sage.all import euler_phi, lazy_attribute, point, line, polygon, frac, floor, lcm, mod, cartesian_product_iterator, ZZ, QQ, PolynomialRing, OrderedPartitions, srange, prime_range, prime_pi, next_prime, previous_prime, gcd, conway_polynomial, GF, binomial, cached_function, infinity, latex
 from sage.databases.cremona import cremona_letter_code
 from lmfdb import db
 from lmfdb.galois_groups.transitive_group import knowl_cache, transitive_group_display_knowl
@@ -49,6 +49,7 @@ columns = [
     ("poly", "text"),
     ("label_absolute", "text"),
     ("rams_absolute", "text"),
+    ("top_slope", "double precision"),
 ]
 
 cache_cols = ["p", "e", "f", "c", "family", "packet", "label", "new_label", "coeffs", "galT", "galois_label", "galois_degree", "slopes", "ind_of_insep", "associated_inertia", "t", "u", "aut", "visible", "hidden", "subfield", "residual_polynomials", "rf"]
@@ -262,10 +263,11 @@ def get_polynomials(basepairs, field_cache, field_data):
         yield from fam
 
 def write_col(family, col, typ):
-    if col == "mass":
-        out = float(family.mass)
-    else:
-        out = getattr(family, col)
+    out = getattr(family, col)
+    if out is None:
+        return r"\N"
+    if typ == "double precision":
+        out = float(out)
     out = str(out)
     if typ.endswith("[]"):
         out = "{" + out[1:-1] + "}"
@@ -287,7 +289,8 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
                 for family in get_db_families(basepairs, field_cache, field_data):
                     key = (family.p, family.f_absolute, family.e_absolute) + tuple(family.visible)
                     if family.n0 == 1:
-                        fields = sorted(family.fields, key=family.field_sort_key)
+                        #fields = sorted(family.fields, key=family.field_sort_key)
+                        fields = family.fields
                         respoly = sorted((tuple(Ztz(f) for f in rec["residual_polynomials"]), i) for (i, rec) in enumerate(fields))
                         subctr = 0
                         sublook = {}
@@ -506,6 +509,15 @@ class pAdicSlopeFamily:
     def scaled_rams(self):
         p, etame = self.p, self.etame
         return [r / (etame * p**i) for (i, r) in enumerate(self.rams, 1)]
+
+    @lazy_attribute
+    def top_slope(self):
+        if self.slopes:
+            return self.slopes[-1]
+        elif self.e > 1:
+            return 0
+        else:
+            return -1
 
     @lazy_attribute
     def slope_multiplicities(self):
@@ -991,7 +1003,7 @@ class pAdicSlopeFamily:
                     while d0.multiplicative_order() != p - 1:
                         d0 += 1
                     opts["d"] = [ZZ(d0**i) for i in range(dtop)]
-            for vec in cartesian_product([opts[name] for name in names]):
+            for vec in cartesian_product_iterator([opts[name] for name in names]):
                 base_map = R.hom(vec)
                 if f > 1:
                     Shom = S.hom([nu], base_map=base_map)
@@ -1068,9 +1080,7 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def field_count(self):
-        if self.field_cache is not None:
-            return len(self.field_cache[self.cache_key])
-        return db.lf_fields.count(self.field_query)
+        return len(self.fields)
 
     @lazy_attribute
     def packet_count(self):

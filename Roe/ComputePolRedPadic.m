@@ -1,4 +1,5 @@
-// Usage: ls /scratch/lf/poly_2_8/ | parallel -j100 --timeout 600 "magma -b p:=2 n:=8 fname:={0} ComputePolRedPadic> /scratch/lf/err_2_8/{0}"
+// Usage: ls /scratch/lf/poly_2_8/ | parallel -j100 --timeout 600 "magma -b suff:=2_8 fname:={0} ComputePolRedPadic.m > /scratch/lf/err_2_8/{0}"
+// Usage: ls /scratch/lf/poly_db/ | parallel -j100 --timeout 600 "magma -b suff:=db fname:={0} ComputePolRedPadic.m > /scratch/lf/err_db/{0}"
 
 Attach("../Pauli/polredabs.m");
 SetColumns(0);
@@ -10,16 +11,18 @@ function sprint(X)
     return remove_whitespace(Sprint(X));
 end function;
 
-infile := Sprintf("/scratch/lf/poly_%o_%o/" * fname, p, n);
-outfile := Sprintf("/scratch/lf/out_%o_%o/" * fname, p, n);
-p := StringToInteger(p);
-n := StringToInteger(n);
+infile := Sprintf("/scratch/lf/poly_%o/" * fname, suff);
+outfile := Sprintf("/scratch/lf/out_%o/" * fname, suff);
+//infile := Sprintf("/Users/roed/Downloads/poly_%o_%o/" * fname, p, n);
+//outfile := Sprintf("/Users/roed/Downloads/out_%o_%o/" * fname, p, n);
 polys := Split(Read(infile), "\n");
 
 pieces := Split(fname, ".");
+p := StringToInteger(pieces[1]);
+n := StringToInteger(pieces[2]) * StringToInteger(pieces[3]);
 if pieces[4][1] eq "0" then
     // There is a bug in PolRedPadic for unramified extensions
-    PrintFile(outfile, Sprintf("%o|%o", polys[1], polys[1]));
+    PrintFile(outfile, Sprintf("%o|%o|%o", polys[1], polys[1], polys[1]));
     quit;
 end if;
 
@@ -41,4 +44,4 @@ for poly in polys do
     PrintFile(outfile, Sprintf("%o|%o|%o", poly, sprint(Zx!best), Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
-// x^8+x^4+x^3+x^2+1
+
