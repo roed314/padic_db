@@ -43,7 +43,7 @@ while true do
                         B<b> := TotallyRamifiedExtension(k, relpoly);
                         Bx<x> := PolynomialRing(B);
                         y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
-                        abspoly := Zx!Minpoly(y,k0);
+                        abspoly := Zx!MininimalPolynomial(y,k0);
                     end if;
                     R<x> := PolynomialRing(k0);
                     bundle := PolRedPadic(R!abspoly);
