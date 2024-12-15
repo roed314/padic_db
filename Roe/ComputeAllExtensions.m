@@ -1,4 +1,4 @@
-// Usage: ls /scratch/lf/poly_rp/ | parallel -j100 --timeout 86400 "magma -b fname:={0} ComputeAllExtensions.m > /scratch/lf/err_rp/{0}"
+// Usage: parallel -j112 --timeout 86400 -a /scratch/lf/todo_rp.txt "magma -b fname:={0} ComputeAllExtensions.m > /scratch/lf/err_rp/{0}"
 
 Attach("../Pauli/AllExtensions.m");
 Attach("../Pauli/polredabs.m");
@@ -13,7 +13,7 @@ end function;
 
 infile := Sprintf("/scratch/lf/poly_rp/" * fname);
 outfile := Sprintf("/scratch/lf/out_rp/" * fname);
-pieces := Split(infile, ".");
+pieces := Split(fname, ".");
 p := StringToInteger(pieces[1]);
 f := StringToInteger(pieces[2]);
 e := StringToInteger(pieces[3]);
