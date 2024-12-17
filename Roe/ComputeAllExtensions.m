@@ -11,8 +11,8 @@ function sprint(X)
     return remove_whitespace(Sprint(X));
 end function;
 
-infile := Sprintf("/scratch/lf/poly_rp/" * fname);
-outfile := Sprintf("/scratch/lf/out_rp/" * fname);
+infile := Sprintf("/scratch/lf/rp_rp/" * fname);
+outfile := Sprintf("/scratch/lf/poly_rp/" * fname);
 pieces := Split(fname, ".");
 p := StringToInteger(pieces[1]);
 f := StringToInteger(pieces[2]);
@@ -45,10 +45,11 @@ while true do
                         y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
                         abspoly := Zx!MinimalPolynomial(y,k0);
                     end if;
-                    R<x> := PolynomialRing(k0);
-                    bundle := PolRedPadic(R!abspoly);
-                    best := Distinguished(bundle);
-                    PrintFile(outfile, Sprintf("%o|%o|%o", sprint(abspoly), sprint(Zx!best), Join([sprint(Zx!g) : g in bundle], ", ")));
+                    PrintFile(outfile, sprint(abspoly));
+                    //R<x> := PolynomialRing(k0);
+                    //bundle := PolRedPadic(R!abspoly);
+                    //best := Distinguished(bundle);
+                    //PrintFile(outfile, Sprintf("%o|%o|%o", sprint(abspoly), sprint(Zx!best), Join([sprint(Zx!g) : g in bundle], ", ")));
                 end for;
             end for;
         end for;
