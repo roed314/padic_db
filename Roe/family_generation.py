@@ -244,12 +244,11 @@ def get_caches():
     field_cache = defaultdict(list)
     field_data = {}
     for i, rec in enumerate(db.lf_fields.search({}, cache_cols)):
-        if "new_label" not in rec:
-            continue
         if i and i % 10000 == 0: print(i)
         field_cache[cache_key(rec)].append(rec)
-        field_data[rec["new_label"]] = dict(rec)
-        field_data[rec["new_label"]]["visible"] = str_to_QQtup(rec["visible"])
+        if "new_label" in rec:
+            field_data[rec["new_label"]] = dict(rec)
+            field_data[rec["new_label"]]["visible"] = str_to_QQtup(rec["visible"])
     return field_cache, field_data
 
 def get_db_families(basepairs, field_cache, field_data):
@@ -1150,7 +1149,7 @@ class pAdicSlopeFamily:
                             rmvec = []
                             for r, m in zip(rvec, mvec):
                                 rmvec.extend([r] * m)
-                            fams.append(cls(base, f, etame, base_data=field_data[base], rams=rmvec, field_cache=field_cache))
+                            fams.append(cls(base, f, etame, base_data=base_data, rams=rmvec, field_cache=field_cache))
                 fams.sort(key=lambda fam: (fam.c, len(fam.slope_multiplicities), list(reversed(fam.slope_multiplicities)), fam.rams))
             ctr = Counter()
             for fam in fams:

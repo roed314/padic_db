@@ -7,8 +7,8 @@ SetColumns(0);
 AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
-//f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
-f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
+f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+//f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
 f := StringToInteger(f);
 if n eq f then
     // Unramified, so we already know the output
@@ -18,32 +18,28 @@ end if;
 // Taken from SuggestedPrecision
 prec := Maximum([2, 2*c]);
 
-/*
-while true do
+if f eq 1 then
     R := pAdicRing(p, prec);
-    if f gt 1 then
-        R<t> := UnramifiedExtension(R, f);
-    end if;
     S<x> := PolynomialRing(R);
-    pol := S!coeffs;
-    try
-        fac, prec_loss, ext_info := Factorization(pol : Extensions:=true);
-        eispol := DefiningPolynomial(ext_info[1]`Extension);
-    catch err
-        prec := 2 * prec;
-        continue;
-    end try;
-    break;
-end while;
-*/
-
-R := pAdicRing(p, prec);
-if f gt 1 then
-    R<t> := UnramifiedExtension(R, f);
+    eispol := S!coeffs;
+else
+    while true do
+        R<t> := UnramifiedExtension(pAdicRing(p, prec), f);
+        S<x> := PolynomialRing(R);
+        pol := S!coeffs;
+        try
+            fac, prec_loss, ext_info := Factorization(pol : Extensions:=true);
+            eispol := DefiningPolynomial(ext_info[1]`Extension);
+        catch err
+            prec := 2 * prec;
+            continue;
+        end try;
+        break;
+    end while;
 end if;
-S<x> := PolynomialRing(R);
-y := x;
-eispol := eval eispol;
+
+//y := x;
+//eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
 respols := ResidualPolynomials(eispol);
