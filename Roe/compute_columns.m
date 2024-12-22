@@ -1,4 +1,4 @@
-// Create a folder Roe/lf.todo/ with one file for each p-adic field (named for the label of the field, with contents the defining polynomial as a list of integers)
+// Create a folder Roe/lf.todo/ with one file for each p-adic field (named for the label of the field, with contents f and the defining polynomial as a list of integers, separated by |)
 // Create folders Roe/lf.errors and Roe/lf.out for error output and results respectively
 // Usage: ls lf.todo | parallel -j128 "magma -b label:={1} compute_columns.m > lf.errors/{1}"
 // Output: Writes to lf.out/<label>, with a | separated line of computed columns
@@ -9,7 +9,7 @@ print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
 f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
 //f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
-f := StringToInteger(f);
+//f := StringToInteger(f);
 if n eq f then
     // Unramified, so we already know the output
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
