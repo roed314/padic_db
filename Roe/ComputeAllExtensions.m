@@ -11,8 +11,8 @@ function sprint(X)
     return remove_whitespace(Sprint(X));
 end function;
 
-infile := Sprintf("/scratch/lf/rp_rp/" * fname);
-outfile := Sprintf("/scratch/lf/poly_rp/" * fname);
+infile := Sprintf("/scratch/lf/rpfull_rp/" * fname);
+outfile := Sprintf("/scratch/lf/out_rp/" * fname);
 pieces := Split(fname, ".");
 p := StringToInteger(pieces[1]);
 f := StringToInteger(pieces[2]);

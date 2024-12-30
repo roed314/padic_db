@@ -1083,7 +1083,7 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def packet_count(self):
-        if self.mass != self.mass_stored:
+        if self.mass != self.mass_stored or any("packet" not in rec for rec in self.fields):
             return r"\N"
         return len(set(rec["packet"] for rec in self.fields))
 
