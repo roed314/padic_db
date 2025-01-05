@@ -34,32 +34,24 @@ Ztx<x> := PolynomialRing(Zt);
 
 prec := 4*n; // We use the same prec for all polynomials, since polynomials that need extra precision tend to arise together.
 for poly in polys do
-    while true do
-        try
-            k0 := pAdicRing(p, prec);
-            R0<x> := PolynomialRing(k0);
-            if f eq 1 then
-                k := k0;
-            else
-                k<t> := UnramifiedExtension(k0, f);
-            end if;
-            R<x> := PolynomialRing(k);
-            relpoly := eval poly;
-            relbundle := PolRedPadic(relpoly);
-            relbest := Distinguished(relbundle);
-            relbest := Ztx![Zt!Coefficients(u) : u in Coefficients(relbest)];
-            B<b> := TotallyRamifiedExtension(k, relpoly);
-            Bx<x> := PolynomialRing(B);
-            y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
-            abspoly := Zx!MinimalPolynomial(y,k0);
-            bundle := PolRedPadic(R0!abspoly);
-            best := Distinguished(bundle);
-            break;
-        catch err
-            print poly, prec;
-            prec *:= 2;
-        end try;
-    end while;
+    k0 := pAdicRing(p, prec);
+    R0<x> := PolynomialRing(k0);
+    if f eq 1 then
+        k := k0;
+    else
+        k<t> := UnramifiedExtension(k0, f);
+    end if;
+    R<x> := PolynomialRing(k);
+    relpoly := eval poly;
+    relbundle := PolRedPadic(relpoly);
+    relbest := Distinguished(relbundle);
+    relbest := Ztx![Zt!Coefficients(u) : u in Coefficients(relbest)];
+    B<b> := TotallyRamifiedExtension(k, relpoly);
+    Bx<x> := PolynomialRing(B);
+    y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
+    abspoly := Zx!MinimalPolynomial(y,k0);
+    bundle := PolRedPadic(R0!abspoly);
+    best := Distinguished(bundle);
     PrintFile(outfile, Sprintf("%o|%o|%o|%o", poly, sprint(Zx!best), sprint(relbest), Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
