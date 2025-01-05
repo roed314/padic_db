@@ -37,6 +37,7 @@ for poly in polys do
     while true do
         try
             k0 := pAdicRing(p, prec);
+            R0<x> := PolynomialRing(k0);
             if f eq 1 then
                 k := k0;
             else
@@ -51,7 +52,7 @@ for poly in polys do
             Bx<x> := PolynomialRing(B);
             y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
             abspoly := Zx!MinimalPolynomial(y,k0);
-            bundle := PolRedPadic(abspoly);
+            bundle := PolRedPadic(R0!abspoly);
             best := Distinguished(bundle);
             break;
         catch err
