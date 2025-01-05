@@ -958,17 +958,18 @@ class pAdicSlopeFamily:
         f, e, etame, generic = self.f, self.e, self.etame, self.poly
         S = generic.parent()
         R = S.base_ring()
-        Zx = PolynomialRing(ZZ, "x")
-        x = Zx.gen()
         names = R.variable_names()
         p = self.p
         q = p**f
         opts = {}
         if f > 1:
             nu = self.nu
-            k = GF(q, 'x', nu)
+            k = GF(q, 't', nu)
+            Zt = PolynomialRing(ZZ, "t")
             d0 = k.gen()
-            bopts = [Zx(y.polynomial()) for y in k]
+            bopts = [Zt(y.polynomial()) for y in k]
+            Ztx = PolynomialRing(Zt, "x")
+            x = Ztx.gen()
             # We should really find the generic residual polynomial, specialize at a given
             # set of a and b values, compute Hermite normal form and pick representatives
             # for the quotient to find copts.  But this is annoying, so instead
@@ -978,6 +979,8 @@ class pAdicSlopeFamily:
             #    cnt = self.slopes.count(s)
         else:
             bopts = [ZZ(b) for b in range(p)]
+            Zx = PolynomialRing(ZZ, "x")
+            x = Zx.gen()
         assert bopts[0] == 0
         aopts = bopts[1:]
         copts = bopts
@@ -995,7 +998,8 @@ class pAdicSlopeFamily:
                 q = p**f
                 dtop = gcd(q - 1, self.etame)
                 if f > 1:
-                    opts["d"] = [(d0**i).polynomial().change_ring(ZZ) for i in range(dtop)]
+                    #opts["d"] = [(d0**i).polynomial().change_ring(ZZ) for i in range(dtop)]
+                    opts["d"] = [Zt((d0**i).polynomial()) for i in range(dtop)]
                 else:
                     # q != 2 since dtop > 1
                     d0 = mod(2,p)
@@ -1004,16 +1008,18 @@ class pAdicSlopeFamily:
                     opts["d"] = [ZZ(d0**i) for i in range(dtop)]
             for vec in cartesian_product_iterator([opts[name] for name in names]):
                 base_map = R.hom(vec)
-                if f > 1:
-                    Shom = S.hom([nu], base_map=base_map)
-                else:
-                    Shom = S.hom([x], base_map=base_map)
+                #if f > 1:
+                #    Shom = S.hom([nu], base_map=base_map)
+                #else:
+                Shom = S.hom([x], base_map=base_map)
                 yield Shom(generic)
         elif e > 1:
             # One possible tame extension
-            return nu**e + p
+            #yield nu**e + p
+            yield x**e + p
         else:
-            yield nu
+            #yield nu
+            yield x
 
     @lazy_attribute
     def cache_key(self):
