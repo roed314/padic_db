@@ -45,14 +45,14 @@ for poly in polys do
     relpoly := eval poly;
     relbundle := PolRedPadic(relpoly);
     relbest := Distinguished(relbundle);
-    relbest := Ztx![Zt!Coefficients(u) : u in Coefficients(relbest)];
+    relbest := sprint(Ztx![Zt!Coefficients(u) : u in Coefficients(relbest)]);
     B<b> := TotallyRamifiedExtension(k, relpoly);
     Bx<x> := PolynomialRing(B);
     y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
     abspoly := Zx!MinimalPolynomial(y,k0);
     bundle := PolRedPadic(R0!abspoly);
     best := Distinguished(bundle);
-    PrintFile(outfile, Sprintf("%o|%o|%o|%o", poly, sprint(Zx!best), sprint(relbest), Join([sprint(Zx!g) : g in bundle], ", ")));
+    PrintFile(outfile, Sprintf("%o|%o|%o|%o", poly, sprint(Zx!best), relbest, Join([sprint(Zx!g) : g in bundle], ", ")));
 end for;
 quit;
 
