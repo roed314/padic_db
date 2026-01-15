@@ -4,4 +4,9 @@
   AllExtensions.m
   JumpSetPack.m
   GenResPack.m
+  PolRedPadic/charpoly.m
+  PolRedPadic/montes.m
+  PolRedPadic/oystein.m
+  PolRedPadic/rampoly.m
+  PolRedPadic/distinguished.m
 }

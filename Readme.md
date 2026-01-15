@@ -1,6 +1,7 @@
 This repository contains code, scripts, data and examples in support of
 
-* The paper "Families of p-adic fields" by Jordi Guàrdia-Rubies, John W. Jones, Kevin Keating, Sebastian Pauli, David P. Roberts, and David Roe (submitting to Lucant 2025)
+* The paper "Families of p-adic fields" by Jordi Guàrdia-Rubies, John W. Jones, Kevin Keating, Sebastian Pauli, David P. Roberts, and David Roe (published in the conference proceedings of Lucant 2025)
+* The paper "Distinguished defining polynomials for extensions of p-adic fields" by Jordi Guàrdia-Rubies, John W. Jones, Kevin Keating, Sebastian Pauli, David P. Roberts, and David Roe (submitted to ANTS XVII)
 * Revisions to the [LMFDB database of p-adic fields](https://olive.lmfdb.xyz/padicField/)
 
 # Overview
@@ -17,6 +18,14 @@ This repository contains code, scripts, data and examples in support of
 * The scripts folder contains scripts used to run some of these functions at scale, used for creating upload files to add to the LMFDB.
 * The examples folder contains example files illustrating how to use some of the intrinsics defined above.
 * The data folder contains some data used by the code above, as well as scripts for downloading necessary data from the LMFDB to make some of the other functions above work.
+
+The `PolRedPadic` folder contains implementations for the algorithms described in the second paper, with the following files:
+
+* [charpoly.m](PolRedPadic/charpoly.m) is a Magma file for computing characteristic polynomials using Newton relations.
+* [montes.m](PolRedPadic/montes.m) is a copy of the +Ideals Magma package written by J. Guardia, J. Montes and E. Nart
+* [oystein.m](PolRedPadic/oystein.m) is a Magma file for computing Oystein polynomials
+* [rampoly.m](PolRedPadic/rampoly.m) is a Magma file for computing ramification polynomials, ramification polygons and residual polynomials
+* [distinguished.m](PolRedPadic/distinguished.m) is a Magma file implementing the overall algorithm for choosing distinguished defining polynomials for extensions of p-adic fields
 
 # Installation
 
