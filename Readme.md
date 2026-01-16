@@ -7,8 +7,7 @@ This repository contains code, scripts, data and examples in support of
 # Overview
 
 * [family_generation.py](family_generation.py) is a Python file containing functions used for adding family data to the LMFDB.
-* [polredabs.m](polredabs.m) is a Magma file containing intrinsics for deterministically choosing a defining polynomial for a p-adic field.
-* [AllExtensions.m](AllExtensions.m) is a Magma file containing intrinsics for constructing all extensions with given invariants (degree, ramification polygon, etc).
+* [AllExtensions.m](AllExtensions.m) is a Magma file containing intrinsics for constructing all extensions with given invariants (degree, ramification polygon, residual polynomial).
 * [GenResPack.m](GenResPack.m) is a Magma file containing intrinsics for computing indices of inseparability and ramification polygons for p-adic extensions, and residual polynomials for the generic polynomial associated to a family of p-adic fields.
 * [JumpSetPack.m](JumpSetPack.m) is a Magma file containing intrinsics for computing jump sets of p-adic extensions.
 * [getslopes.m](getslopes.m) is a Magma file containing miscellaneous intrinsics used in adding fields to the LMFDB.
@@ -34,10 +33,12 @@ Clone this repository using
 ```
 git clone https://github.com/roed314/padic_db.git
 ```
-After starting Magma within the `padic_db` folder, `AttachSpec(spec)` will make all of the intrinsics defined in the Magma files available.
+After starting Magma within the `padic_db` folder, `AttachSpec("spec")` will make all of the intrinsics defined in the Magma files available.
 
 After starting Sage within the `padic_db` folder, `%attach family_generation.py` will make the functions defined in that file available for use.
 
 # Usage
 
 See the individual files for explanations of the intrinsics, and the `examples` folder for example usage.
+
+

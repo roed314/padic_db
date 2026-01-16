@@ -1,3 +1,8 @@
+///////////////////////////////////////////////
+// computute all extensions of a pi-adic field
+// by Sebastian Pauli and Brian Sinclair
+
+
 ///////////////////////////////
 // Indices of inseparability
 
