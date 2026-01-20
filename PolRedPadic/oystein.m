@@ -300,6 +300,7 @@ function oystein_poly_om(phi)
     // OM
     K<a>:=NumberField(phiZ);
     Montes(K,p);
+    if #K`PrimeIdeals[p] ne 1 then error "OysteinPoly: polynomial must be irreducible over pAdicRing(",p,")"; end if;
     P := K`PrimeIdeals[p,1];
     D := Valuation(Discriminant(K),p) - 2*(K`LocalIndex[p]);
     piK := P`LocalGenerator;
@@ -309,6 +310,7 @@ function oystein_poly_om(phi)
     f := P`f; // inertia degree
     // D = f*(J+e-1)
     newprec := Max(Precision(Zp),2*((D div f)-e+1));
+
     Zpp := ChangePrecision(Zp,newprec);
     phip := ChangePrecision(Polynomial(Zpp,phi),newprec);  
     if f eq 1 then
@@ -383,7 +385,7 @@ and a root of g in K[x]/(g)
   f := ChangePrecision(f,Precision(L));
   vprintf Oystein,1: "OysteinPoly: %o over %o\n",f,K;
 
-  if not IsMonic(f) then error "OysteinPoly: polynomial",f,"is not monic"; end if;
+  if not IsMonic(f) then error "OysteinPoly: polynomial",f,"must be monic"; end if;
   if IsEisenstein(f) then
     L := TotallyRamifiedExtension(L,f);
     return OysteinPoly(L,K);
@@ -394,7 +396,7 @@ and a root of g in K[x]/(g)
     return oystein_poly_om(f);
   else
     factors, _ ,Cs := Factorization(f:Certificates:=true); 
-    if #factors gt 1 then error "OysteinPoly: polynomial is not irreducible"; end if;
+    if #factors gt 1 then error "OysteinPoly: polynomial must be irreducible"; end if;
     U := UnramifiedExtension(L,ConwayOrJrPolynomial(PrimeRing(L),Cs[1]`F));
     factors, _ ,Ls := Factorization(Polynomial(U,f):Extensions:=true); 
     return OysteinPoly(Ls[1]`Extension,K);
@@ -410,8 +412,6 @@ intrinsic OysteinPoly(f::RngUPolElt[RngPad]) -> .
   K := CoefficientRing(f);
   return OysteinPoly(f,K);
 end intrinsic;
-
-
 
 
 
