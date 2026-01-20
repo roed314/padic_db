@@ -1,0 +1,4 @@
+177,0
+S,Indices,"This computes the indices of inseparability of the extension L/K, where L is generated over K by a root of f, which is an Eisenstein polynomial over O_K",0,1,0,0,0,0,0,0,0,312,,82,-38,-38,-38,-38,-38
+S,RamPolygon,This computes the ramification polygon of a totally ramified extension L/K using the indices of inseparability of L/K. One must also specify the degree n of the extension and the residue characteristic p,0,3,0,0,0,0,0,0,0,148,,0,0,148,,0,0,82,,82,82,-38,-38,-38,-38
+S,Residual,"Computes the residual polynomials of the generic polynomial corresponding to a family of p-adic fields. The input ""f"" should be the generic polynomial, given as a polynomial over Z_p. The input ""FqAz"" is a polynomial ring in one variable whose coefficients are rational functions over F_p in the parameters used to define the family. The output will be an element of FqAz",0,2,0,0,0,0,0,0,0,311,,0,0,312,,82,-38,-38,-38,-38,-38

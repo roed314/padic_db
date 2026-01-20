@@ -1,5 +1,10 @@
+//////////////////////
+// Examples for AllExtensions and IndicesOfInseperability
 
-Attach("AllExtensions.m");
+AttachSpec("spec");
+
+//////////////////////
+
 z3 := pAdicRing(3,30);
 J := PossibleDiscriminants(z3,9);
 J;
@@ -12,7 +17,6 @@ L;
 
 /////////////////////
 
-Attach("AllExtensions.m");
 z3:=pAdicRing(3,30);
 z3x<x>:=PolynomialRing(z3);
 Rs := AllRamificationPolygons(z3,9,14); 
