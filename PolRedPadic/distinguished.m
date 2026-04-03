@@ -586,7 +586,8 @@ end intrinsic;
 
 
 intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:="auto") -> .
-{For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
+{For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).
+Phi must be defined over Zp and or define a totally ramified extension over an unramified extensions of Zp.}
    p := Prime(K);
    vprintf Monge,2:"PolRedPadic: converting to Oystein polynomial\n";
    phi, nu, alpha := OysteinPoly(Phi,K);

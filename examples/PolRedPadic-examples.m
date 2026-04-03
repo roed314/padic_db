@@ -35,7 +35,7 @@ psi2 := y^6+3*y^5+3*y^4+9*6*y^3+3+9*3;
 R2, rho2 := RamificationPoly(psi2);
 "ramificaion polygon",LowerVertices(R2),"with slopes",LowerSlopes(R2),"and residual polynomials",ResidualPolys(psi2);
 
-phi2 := PolRedPadic(psi);
+phi2 := PolRedPadic(psi2);
 "Distinguished defining polynomial over Z3[x]/(x^3+2x+1)", phi0;
 phib := PolRedPadic(psi2,Z3);
 "Distinguished defining polynomial over Z3"; String(phib:wherenu)," or ";phib;
