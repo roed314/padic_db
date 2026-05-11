@@ -82,7 +82,6 @@ intrinsic Expansion2(f::RngUPolElt,nu::RngUPolElt:limit:=0) -> .
   end if;
 
   expexp := [];
-// TODO which representatives are we using over an unramified extension ? 
   for g in expansion do
     h := g;
     gel := [];
