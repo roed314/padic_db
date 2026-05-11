@@ -1,10 +1,11 @@
-///////////////////////////////////////////////
-// computute all extensions of a pi-adic field
-// by Sebastian Pauli and Brian Sinclair
+/////////////////////////////////////////////////////////////////
+// compute all extensions of a pi-adic field
+// by Sebastian Pauli and Brian Sinclair (unless noted otherwise)
 
 
 ///////////////////////////////
 // Indices of inseparability
+// by Kevin Keating and Sebastian Pauli
 
 intrinsic AllIndicesOfInseperability(K,n,j) -> .
 {Input:  Output: }
@@ -18,7 +19,6 @@ intrinsic AllIndicesOfInseperability(K,n,j) -> .
   while k gt 1 do
     Isk := [];
     for this_i in Is do
-      //"this_i",this_i;
       if Valuation(this_i[#this_i],p) lt k then
         Append(~Isk, this_i cat [this_i[#this_i]]);
       else
@@ -36,7 +36,6 @@ intrinsic AllIndicesOfInseperability(K,n,j) -> .
       end if;
       Is := Isk;
     end for;
-    //k,Is;
     k := k-1;
   end while;
   Isr := [];
@@ -69,10 +68,6 @@ intrinsic IndicesOfInseperability(f) -> .
   end for;
   return i;
 end intrinsic;
-
-////////////////////////////////////////////////////////////////
-///
-
 
 
 ///////////////////////////////////////////////////////////////
@@ -163,6 +158,7 @@ function vertices_slopes(ramification_polygon)
 end function;
 
 /*
+Example
 
 Attach("AllExtensions.m");
 
@@ -258,13 +254,10 @@ intrinsic RamificationPolygonWithColinearPoints(f::RngUPolElt[RngPad]) -> .
             //  2D cross product of the vectors oa and ob.
             return (a[1] - o[1]) * (b[2] - o[2]) - (a[2] - o[2]) * (b[1] - o[1]);
         end function;
-//"verts",verts;
         lower := [verts[1]];
         segments := [];
         for i in [2..#verts] do
-//"i",i,#lower;
             //  We check cross < 0 since we want to retain points on the boundary.
-//if #lower ge 2 then cross(lower[#lower-1], lower[#lower], verts[i]); end if;
             while #(lower) ge 2 and cross(lower[#lower-1], lower[#lower], verts[i]) lt 0 do
                 lower := lower[1..#lower-1];
             end while;
@@ -322,7 +315,6 @@ function ResidualPolynomials_sub(R,rho)
         L:= CoefficientRing(rho);
 
         vertices, slopes:=vertices_slopes(R);
-//"slopes",slopes;
         if vertices[1][1] eq 0 then
                 vertices:=vertices[2..#vertices];               //get rid of point with x-coordinate=0
                 slopes:=slopes[2..#slopes];                     //get rid of segment with infinite slope
@@ -614,22 +606,7 @@ end intrinsic;
 
 
 
-/////////////////////////////////////////////////////////////////
-//
-// ENUM.M - Enumerate all extensions given additional invariants
-//
-//////////////////////////////////////////////////////////////////
-// load "rampol-enum.m";
-//////////////////////////////////////////////////////////////////
-
-
-//
-// RAMPOL-ENUM.M - Enumerate possible ramificaiton polygons
-//
-
-//////////////////////////////////////////////////////////////////
-//load "rampol.m";
-
+//////////////////////////////////////////////////////////////////////
 // Computes the lower convex hull of a set of two-dimensional points.
 //
 // Input: an enuemrated sequence of <x, y> pairs representing the points.
@@ -663,6 +640,7 @@ lower_convex_hull := function(points)
     return lower;
 end function;
 
+//////////////////////////////////////////////////////////////////
 // Create the Ramification Polygon of polynomial f
 //
 // Input:
@@ -896,8 +874,6 @@ AllRamificationPolygonsSub := function(crp,s)
     lastvert := crp`rpolyg[#crp`rpolyg];
     
     // Lower bound based on current minimum valutions
-//"crp",#crp`lowerv,Parent(#crp`lowerv),crp`p,Parent(crp`p);
-//[crp`p^s..#crp`lowerv];
     minbound := Min([n*(Valuation(crp`K!Binomial(k,crp`p^s))+crp`lowerv[k]-1)+k : k in [crp`p^s..#crp`lowerv]] cat [n*(Valuation(crp`K!Binomial(n,crp`p^s)))]);
 
     // Lower bound based on last added segment
@@ -1106,13 +1082,8 @@ ExamplePolyFromCRP := function(crp)
 end function;
 
 
-
-//////////////////////////////////////////////////////////////////
-// load "resseg-enum.m";
-//////////////////////////////////////////////////////////////////
-
-//
-// RESSEG-ENUM.M - Enumerate possible residual polynomials of segments
+////////////////////////////////////////////////////////
+// Enumerate possible residual polynomials of segments
 //
 
 // AllResidualPolynomials
@@ -1208,11 +1179,9 @@ OUTPUT: A list of possible of representatives of residual polynomial classes [_A
         end if;
     end while;
 
-    //print "Aijs",Aijs;
     
     // PHASE TWO - CONSTRUCT POLYNOMIALS USING THOSE RESIDUES
     
-    //S := [1] cat [R[i][1] : i in [2..#R-1] | allslopes[i] ne allslopes[i-1]] cat [R[#R][1]];
     allslopes := [ -( (R[i+1][2]-R[i][2]) / (R[i+1][1]-R[i][1]) ) : i in [1..#R-1]];
     Sindex := [1] cat [i : i in [2..#R-1] | allslopes[i] ne allslopes[i-1]] cat [#R];
     S := [R[i][1] : i in Sindex];
@@ -1220,18 +1189,12 @@ OUTPUT: A list of possible of representatives of residual polynomial classes [_A
     h := [-Numerator(s) : s in slopes];
     e := [Denominator(s) : s in slopes];
 
-    //print "Sindex",Sindex;
-    //print "S",S;
-    //print slopes;
-
     Aflat := [];
     for aij in Aijs do
         ThisA := <>;
         for i in [1..#S-1] do
-            // RKz![res(rhol[Integers()!(j*e[r]+rpv[r][1])] div (K.1)^(-Integers()!(j*h[r]-rpv[r][2]))) : j in [0..Integers()!(d[r]/e[r])]]);
             deg := Integers()!((S[i+1]-S[i])/e[i]);
             respoly := [Zero(rk) : cnt in [0..deg]];
-            //for j in segs[i] do
             for j in [Sindex[i]..Sindex[i+1]] do
                 term := Integers()!( (R[j][1]-S[i])/e[i] );
                 //print "term",<i,j>,aij[j],"* z ^",term;
@@ -1375,7 +1338,6 @@ delta_0 - a representative of a class in RK*/(RK*)^n
     Sindex := [1] cat [i : i in [2..#R-1] | allslopes[i] ne allslopes[i-1]] cat [#R];
     S := [R[i][1] : i in Sindex];
     slopes := [allslopes[i] : i in Sindex[1..#Sindex-1]];
-    //slopes := [-((R[Index(xes,S[i+1])][2]-R[Index(xes,S[i])][2]) / (S[i+1]-S[i])) : i in [1..#S-1]];
     h := [Numerator(s) : s in slopes];
     e := [Denominator(s) : s in slopes];
     
@@ -1429,12 +1391,9 @@ delta_0 - a representative of a class in RK*/(RK*)^n
             else
                 image := {Evaluate(Parent(A[1]).1^S[Index(slopes,m)]*A[Index(slopes,m)],gamma) : gamma in RK};
                 if image eq Set(RK) then
-                    //print m,"is in slopes, Sm is surjective, so",<i+1,j>,"gets 0.",image;
                     tau[i+1][j] := {Zero(RK)};
                     Append(~surjective_s_places,<i+1,j>);
                 else
-                    //m,Index(slopes,m),slopes,S[Index(slopes,m)],A[Index(slopes,m)];
-                    //print m,"is in slopes, Sm not surjective!",image;
                     if k_is_base then
                         tau[i+1][j] := Set(RK);
                     else
@@ -1513,10 +1472,8 @@ end intrinsic;
 function print_template_old(tau)
     rtau := Reverse(tau);
     c := #rtau[1];
-    //print "   " cat &cat[" x^" cat IntegerToString(i) : i in [#tau..0 by -1]];
     str := "   " cat &cat[" x^" cat IntegerToString(i) : i in [#tau..0 by -1]];
     for i in [c..1 by -1] do
-        //print "p^" cat IntegerToString(i) cat "  0 " cat &cat[" " cat t[i]:t in rtau];
         str cat:= "\n" cat "p^" cat IntegerToString(i) cat "  0 " cat &cat[" " cat t[i]:t in rtau];
     end for;
     return str;
@@ -1526,10 +1483,8 @@ function print_template(tau:output:="text")
     rtau := Reverse(tau);
     c := #rtau[1];
     if output eq "text" then
-        //print "   " cat &cat[" x^" cat IntegerToString(i) : i in [#tau..0 by -1]];
         str := "   " cat &cat[" x^" cat IntegerToString(i) : i in [#tau..0 by -1]];
         for i in [c..1 by -1] do
-            //print "p^" cat IntegerToString(i) cat "  0 " cat &cat[" " cat t[i]:t in rtau];
             str cat:= "\n" cat "p^" cat IntegerToString(i) cat "  0 " cat &cat[" " cat t[i]:t in rtau];
         end for;
     elif output eq "latex" then
@@ -1563,7 +1518,6 @@ intrinsic AllTotallyRamifiedExtensionsDemo(K,R:verbose:=false,output:="text") ->
     pi := UniformizingElement(K);
 
     // Precompute n*Hasse-Herbrand of RP
-    //nhhr := [Min([pt[2] : pt in rpolyplusm]) : rpolyplusm in [[<pt[1],pt[2]+m*pt[1]> : pt in R] : m in [1..2*n] ]];
 
     // Take R, and find xes[], a[], b[] s.t. <x,y> eq <x,an+b>
     a := []; b := [];
@@ -1579,7 +1533,6 @@ intrinsic AllTotallyRamifiedExtensionsDemo(K,R:verbose:=false,output:="text") ->
     Sindex := [1] cat [i : i in [2..#R-1] | allslopes[i] ne allslopes[i-1]] cat [#R];
     S := [R[i][1] : i in Sindex];
     slopes := [allslopes[i] : i in Sindex[1..#Sindex-1]];
-    //slopes := [-((R[Index(xes,S[i+1])][2]-R[Index(xes,S[i])][2]) / (S[i+1]-S[i])) : i in [1..#S-1]];
     h := [Numerator(s) : s in slopes];
     e := [Denominator(s) : s in slopes];
     
@@ -1608,11 +1561,8 @@ intrinsic AllTotallyRamifiedExtensionsDemo(K,R:verbose:=false,output:="text") ->
     // 3. Set Free Choices (respecting ell)
     if verbose then print "3. Set free choices (respecting ell)"; end if;
     reducedzeros := ([<(hhm mod n)+1,(n-(hhm mod n)+hhm)/n> : hhm in nhhr | (n-(hhm mod n)+hhm) mod n eq 0]);
-    //print "nhhr",nhhr;
-    //print "reducedzeros",reducedzeros;
     for i in [1..n] do
         for j in [1..c] do
-            //print <i,j>,<i,j> notin reducedzeros,(i eq 1 or j ge minval[i-1]);
             if <i,j> notin reducedzeros and (i eq 1 or j ge minval[i-1]) then
                 taustr[i][j] := "R_K";
             end if;
@@ -1626,7 +1576,6 @@ intrinsic AllTotallyRamifiedExtensionsDemo(K,R:verbose:=false,output:="text") ->
         i := nhhr[m] mod n;
         if (n-i+nhhr[m]) mod n eq 0 then
             j := (n-i+nhhr[m]) div n;
-            //m,<i,j>;
             taustr[i+1][j] := "S_" cat IntegerToString(m);
         end if;
     end for;
@@ -1637,9 +1586,7 @@ intrinsic AllTotallyRamifiedExtensionsDemo(K,R:verbose:=false,output:="text") ->
     for i in [1..#R] do
         if b[i] ne 0 then
             seg := #[cnt : cnt in S | cnt le R[i][1]];
-            //seg := 1;
             j := a[i] + 1 - Valuation(Binomial(b[i],R[i][1]),p);
-            //print R[i],"(",a[i],"n +",b[i],") sets f_{",b[i],",",j,"} to A_{",seg,",",R[i][1]-S[seg],"/",e[seg],"}";
             taustr[b[i]+1][j] := "A" cat IntegerToString(seg) cat IntegerToString((R[i][1]-S[seg]) div e[seg]);
         end if;
     end for;
@@ -1686,7 +1633,6 @@ phi0 - the constant coefficient mod pi^2
     "AllResidualPolynomials";
     if phi0 ne 0 then
        AA := <AllResidualPolynomials(k,R,phi0) : R in RR>;
-    //E := [[&cat+[AllTotallyRamifiedExtensions(k,RR[i],a,res(phi_0/Prime(k))) : a in A] : A in AA[i]] : i in [1..#RR]];
       " -- done";
        if invariants then
          E := Flat([[rec<FRP|K:=K,deg:=n,j:=RR[i][1][2],rampol:=RR[i],A:=a,generators:=AllTotallyRamifiedExtensions(k,RR[i],a,res(phi0/Prime(k)))> : a in AA[i]] : i in [1..#RR]]);
@@ -1695,7 +1641,6 @@ phi0 - the constant coefficient mod pi^2
       end if;
     else
       phi0s := DistinctConstantCoefficients(K,n);      
-    //E := [[&cat+[AllTotallyRamifiedExtensions(k,RR[i],a,res(phi_0/Prime(k))) : a in A] : A in AA[i]] : i in [1..#RR]];
       " -- done";
        if invariants then
          E := Flat([[[rec<FRP|K:=K,deg:=n,j:=RR[i][1][2],rampol:=RR[i],phi0:=phi0,A:=a,generators:=AllTotallyRamifiedExtensions(k,RR[i],a,res(phi0/Prime(k)))> : a in AllResidualPolynomials(k,RR[i],phi0)] : phi0 in phi0s]:i in [1..#RR]]);
