@@ -92,10 +92,11 @@ function RamificationPolygon_sub(phi);
 end function;
 
 
-intrinsic RamificationPolygonA(f::RngUPolElt[RngPad]) -> .
+intrinsic RamificationPolygon(f::RngUPolElt[RngPad]) -> .
 {
-Returns the ramification polygon of f.
-
+Returns the ramification polygon of f with the slopes of the segments in decreasing order.
+}
+/*
 The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root of f and n is the degree of f.
 
         EXAMPLES:
@@ -129,9 +130,8 @@ The ramification polygon is the Newton polygon of f(a*x+a)/a^n where a is a root
 
 
 
-        AUTHORS:
-
-}
+        AUTHORS: Brian Sinclair and Sebastian Pauli
+*/
 
         if not IsEisenstein(f) then
             Error("Ramification polynomials are only defined for Eisenstein polynomials");
@@ -359,8 +359,10 @@ end function;
 
 intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
         {
-        Returns a list of the residual polynomials of the ramification polynomial of an Eisenstein polynomial self.
-        
+        Returns the residual polynomials of the ramification polynomial 
+		of an Eisenstein polynomial with the slopes of the segments in decreasing order
+	}
+/*
         EXAMPLES::
 
         The residual polynomials of the segments of the ramification polygon of an Eisenstein polynomial::
@@ -400,14 +402,12 @@ intrinsic ResidualPolynomials(f::RngUPolElt[RngPad]) -> .
              ResidualPolynomials(f);
              // [z + 1, z^2 + 1, z^4 + 1, z^8 + 1]
 
-
-
-
         AUTHORS:
 
-        - Sebastian Pauli and Brian Sinclair (2017-07-20): initial version
+        - Sebastian Pauli and Brian Sinclair (2017-07-20): initial Sage version
         - Sebastian Pauli (2018-03-13): Magma
-        }
+*/
+
         if not IsEisenstein(f) then
             Error("the polynomial self must be Eisenstein");
         end if;
