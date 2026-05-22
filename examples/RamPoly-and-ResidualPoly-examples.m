@@ -1,10 +1,10 @@
 /////////////////////////////////
 // our implemntations are based on different definitions
 //
-// AllExtensions.m is based on [PS] S. Pauli and B. Sinclair, Enumerating extensions of (pi)-adic fields with
-given invariants, Int. J. Number Theory 13 (2017)
-// PolRedPadic is based on [GJK+] J. Guardia, J.W. Jones, K. Keating, S. Pauli, D.P. Roberts, and
-D. Roe, Distinguished defining polynomials for extensions of p-adic fields
+// AllExtensions.m is based on [PS] S. Pauli and B. Sinclair, 
+// Enumerating extensions of (pi)-adic fields withgiven invariants, Int. J. Number Theory 13 (2017)
+// PolRedPadic is based on [GJK+] J. Guardia, J.W. Jones, K. Keating, S. Pauli, D.P. Roberts, and D. Roe, 
+// Distinguished defining polynomials for extensions of p-adic fields
 
 AttachSpec("spec");
 
@@ -20,7 +20,7 @@ R[2];
 A := AllResidualPolynomials(K,R[3],3);
 "Choose restidual polynomials";
 A[2];
-psis := AllTotallyRamifiedExtensions(k,R[3],A[2],1);
+psis := AllTotallyRamifiedExtensions(K,R[3],A[2],1);
 
 psi := psis[10];
 "Considering the Eisenstein polynomial",psi;
@@ -39,7 +39,7 @@ R2, rho := RamificationPoly(psi);
 A1 := ResidualPolynomials(psi);        
 A1;
 "ResidualPolys from PolRedPadic/rampoly.m";
-A2 := ResidualPolys(f);                 
+A2 := ResidualPolys(psi);  
 A2;
 "Residual from GenResPack.mi see GenResExamples";
 
