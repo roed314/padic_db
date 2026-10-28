@@ -51,14 +51,14 @@ intrinsic HasseHerbrand(R::NwtnPgon,m) -> .
 {e*Phi(m), where Phi is the Hasse Herbrand function of the ramification polygon R}
   h := Minimum([r[2]-r[1]*m:r in LowerVertices(R)]);
   return h;
-end intrinsic
+end intrinsic;
 
 intrinsic HasseHerbrand(phi::RngUPolElt,m) -> .
 {e*Phi(m), where Phi is the Hasse Herbrand function of the ramification polygon R}
   R,rho := RamificationPoly(phi);
   h := Minimum([r[2]-r[1]*m:r in LowerVertices(R)]);
   return h;
-end intrinsic
+end intrinsic;
 
 
 /////////////////////////////////////////////////////////////////////////
